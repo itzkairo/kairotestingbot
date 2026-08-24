@@ -1,0 +1,20 @@
+{
+  "name": "kairotestingbot",
+  "version": "1.0.0",
+  "description": "Production-ready Tier Testing Bot for KairoTiers",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "deploy": "node deploy-commands.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "@supabase/supabase-js": "^2.39.3",
+    "dotenv": "^16.4.1",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}
