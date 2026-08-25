@@ -84,25 +84,18 @@ module.exports = {
             // @HERE PING
             // -----------------------------------------
 
-<<<<<<< HEAD
-            await interaction.channel.send({
-=======
             const pingMessage = await interaction.channel.send({
->>>>>>> c9184e6 (Theme)
                 content: '@here',
                 allowedMentions: {
                     parse: ['everyone']
                 }
             });
 
-<<<<<<< HEAD
-=======
             // Delete ping message after 1 second
             setTimeout(async () => {
                 await pingMessage.delete().catch(() => {});
             }, 1000);
 
->>>>>>> c9184e6 (Theme)
             // -----------------------------------------
             // SUCCESS
             // -----------------------------------------
