@@ -24,6 +24,7 @@ module.exports = {
             .setDescription(
                 '**Welcome to the KairoTiers Testing System!**\n\n' +
 
+<<<<<<< HEAD
                 '**1️⃣ Register Your Profile**\n' +
                 'Click **Register / Update Profile** and enter your Minecraft IGN, Region and Account Type.\n\n' +
 
@@ -33,6 +34,21 @@ module.exports = {
                 '**🌍 Regions:** `NA` • `EU` • `AS/AU` • `SA`\n\n' +
 
                 '🔴 **Important:** You must have a registered profile to join a waitlist.'
+=======
+                '**1. Register**\n' +
+                'Click **Register / Update Profile** and enter your Minecraft IGN, Region and Account Type.\n\n' +
+
+                '**2. Choose a Waitlist**\n' +
+                'After registering, select a gamemode below to join its testing waitlist.\n\n' +
+
+                '**3. Get Tested**\n' +
+                'When a tester becomes available, you will be contacted to begin your test.\n\n' +
+
+                '**Regions**\n' +
+                '`NA` • `EU` • `AS/AU` • `SA`\n\n' +
+
+                '🔴 **Important:** You must have a registered profile before joining a waitlist.'
+>>>>>>> c9184e6 (Theme)
             )
             .setFooter({
                 text: 'KairoTiers • Minecraft Tier Testing'
