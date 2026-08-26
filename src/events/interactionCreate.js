@@ -40,18 +40,21 @@ module.exports = {
                     );
 
                     if (interaction.replied) {
+
                         await interaction.editReply({
                             content:
                                 '❌ An error occurred while executing this command.'
                         }).catch(() => {});
 
                     } else if (interaction.deferred) {
+
                         await interaction.editReply({
                             content:
                                 '❌ An error occurred while executing this command.'
                         }).catch(() => {});
 
                     } else {
+
                         await interaction.reply({
                             content:
                                 '❌ An error occurred while executing this command.',
@@ -73,69 +76,201 @@ module.exports = {
                 const customId = interaction.customId;
 
                 // =================================================
+                // TESTER LEADERBOARD RESET
+                // =================================================
+
+                if (
+                    customId ===
+                    'tester_leaderboard_reset'
+                ) {
+
+                    // =============================================
+                    // OWNER CHECK
+                    // =============================================
+
+                    if (
+                        interaction.user.id !==
+                        config.ownerId
+                    ) {
+
+                        return await interaction.reply({
+                            content:
+                                '❌ Only the bot owner can reset the tester leaderboard.',
+                            flags:
+                                MessageFlags.Ephemeral
+                        });
+                    }
+
+                    // =============================================
+                    // RESET LEADERBOARD
+                    // =============================================
+
+                    try {
+
+                        const {
+                            error
+                        } = await supabase
+                            .from('results')
+                            .delete()
+                            .not(
+                                'id',
+                                'is',
+                                null
+                            );
+
+                        if (error) {
+
+                            console.error(
+                                'TESTER LEADERBOARD RESET ERROR:',
+                                error
+                            );
+
+                            return await interaction.reply({
+                                content:
+                                    '❌ Failed to reset the tester leaderboard.',
+                                flags:
+                                    MessageFlags.Ephemeral
+                            });
+                        }
+
+                        return await interaction.reply({
+                            content:
+                                '✅ Tester leaderboard has been reset successfully.',
+                            flags:
+                                MessageFlags.Ephemeral
+                        });
+
+                    } catch (error) {
+
+                        console.error(
+                            'LEADERBOARD RESET ERROR:',
+                            error
+                        );
+
+                        return await interaction.reply({
+                            content:
+                                '❌ Something went wrong while resetting the leaderboard.',
+                            flags:
+                                MessageFlags.Ephemeral
+                        });
+                    }
+                }
+
+                // =================================================
                 // REGISTRATION BUTTON
                 // =================================================
 
                 if (customId === 'register_profile') {
 
-                    const modal = new ModalBuilder()
-                        .setCustomId('registration_modal')
-                        .setTitle('Profile Registration');
+                    const modal =
+                        new ModalBuilder()
+                            .setCustomId(
+                                'registration_modal'
+                            )
+                            .setTitle(
+                                'Profile Registration'
+                            );
 
-                    const ignInput = new TextInputBuilder()
-                        .setCustomId('ign')
-                        .setLabel('Minecraft IGN')
-                        .setStyle(TextInputStyle.Short)
-                        .setRequired(true);
+                    const ignInput =
+                        new TextInputBuilder()
+                            .setCustomId('ign')
+                            .setLabel(
+                                'Minecraft IGN'
+                            )
+                            .setStyle(
+                                TextInputStyle.Short
+                            )
+                            .setRequired(true);
 
-                    const regionInput = new TextInputBuilder()
-                        .setCustomId('region')
-                        .setLabel('Region (e.g. EU, NA, AS)')
-                        .setStyle(TextInputStyle.Short)
-                        .setRequired(true);
+                    const regionInput =
+                        new TextInputBuilder()
+                            .setCustomId('region')
+                            .setLabel(
+                                'Region (e.g. EU, NA, AS)'
+                            )
+                            .setStyle(
+                                TextInputStyle.Short
+                            )
+                            .setRequired(true);
 
-                    const accInput = new TextInputBuilder()
-                        .setCustomId('acc_type')
-                        .setLabel('Account Type (Premium/Cracked)')
-                        .setStyle(TextInputStyle.Short)
-                        .setRequired(true);
+                    const accInput =
+                        new TextInputBuilder()
+                            .setCustomId('acc_type')
+                            .setLabel(
+                                'Account Type (Premium/Cracked)'
+                            )
+                            .setStyle(
+                                TextInputStyle.Short
+                            )
+                            .setRequired(true);
 
                     modal.addComponents(
-                        new ActionRowBuilder().addComponents(
-                            ignInput
-                        ),
-                        new ActionRowBuilder().addComponents(
-                            regionInput
-                        ),
-                        new ActionRowBuilder().addComponents(
-                            accInput
-                        )
+
+                        new ActionRowBuilder()
+                            .addComponents(
+                                ignInput
+                            ),
+
+                        new ActionRowBuilder()
+                            .addComponents(
+                                regionInput
+                            ),
+
+                        new ActionRowBuilder()
+                            .addComponents(
+                                accInput
+                            )
                     );
 
-                    return await interaction.showModal(modal);
+                    return await interaction.showModal(
+                        modal
+                    );
                 }
 
                 // =================================================
                 // WAITLIST BUTTONS
                 // =================================================
 
-                if (customId.startsWith('waitlist_')) {
+                if (
+                    customId.startsWith(
+                        'waitlist_'
+                    )
+                ) {
 
                     const gamemodeMap = {
-                        waitlist_axe: 'Axe',
-                        waitlist_sword: 'Sword',
-                        waitlist_uhc: 'UHC',
-                        waitlist_smp: 'SMP',
-                        waitlist_diapot: 'DiaPot',
-                        waitlist_mace: 'Mace',
-                        waitlist_crystal: 'Crystal',
-                        waitlist_nethpot: 'NethPot'
+
+                        waitlist_axe:
+                            'Axe',
+
+                        waitlist_sword:
+                            'Sword',
+
+                        waitlist_uhc:
+                            'UHC',
+
+                        waitlist_smp:
+                            'SMP',
+
+                        waitlist_diapot:
+                            'DiaPot',
+
+                        waitlist_mace:
+                            'Mace',
+
+                        waitlist_crystal:
+                            'Crystal',
+
+                        waitlist_nethpot:
+                            'NethPot'
                     };
 
                     const gamemode =
-                        gamemodeMap[customId];
+                        gamemodeMap[
+                            customId
+                        ];
 
                     if (!gamemode) {
+
                         return await interaction.reply({
                             content:
                                 '❌ Invalid waitlist.',
@@ -153,6 +288,7 @@ module.exports = {
                             interaction.member
                         )
                     ) {
+
                         return await interaction.reply({
                             content:
                                 '❌ You cannot join the testing waitlist.',
@@ -170,6 +306,7 @@ module.exports = {
                             interaction.member
                         )
                     ) {
+
                         return await interaction.reply({
                             content:
                                 '❌ **Register your profile first.**\n\n' +
@@ -184,9 +321,12 @@ module.exports = {
                     // =============================================
 
                     const roleId =
-                        config.roles.waitlist?.[gamemode];
+                        config.roles.waitlist?.[
+                            gamemode
+                        ];
 
                     if (!roleId) {
+
                         return await interaction.reply({
                             content:
                                 `❌ Waitlist role for **${gamemode}** is not configured.`,
@@ -201,6 +341,7 @@ module.exports = {
                         );
 
                     if (!role) {
+
                         return await interaction.reply({
                             content:
                                 '❌ The waitlist role could not be found.',
@@ -315,6 +456,7 @@ module.exports = {
                         interaction.member
                     )
                 ) {
+
                     return await interaction.reply({
                         content:
                             '❌ You are blacklisted from joining KairoTiers testing queues.',
@@ -332,6 +474,7 @@ module.exports = {
                         interaction.member
                     )
                 ) {
+
                     return await interaction.reply({
                         content:
                             '❌ **Register your profile first.**',
@@ -383,8 +526,12 @@ module.exports = {
                         data: cooldown,
                         error: cooldownError
                     } = await supabase
-                        .from('testing_cooldowns')
-                        .select('cooldown_until')
+                        .from(
+                            'testing_cooldowns'
+                        )
+                        .select(
+                            'cooldown_until'
+                        )
                         .eq(
                             'discord_id',
                             interaction.user.id
@@ -446,9 +593,12 @@ module.exports = {
                         // =========================================
 
                         const {
-                            error: expiredDeleteError
+                            error:
+                                expiredDeleteError
                         } = await supabase
-                            .from('testing_cooldowns')
+                            .from(
+                                'testing_cooldowns'
+                            )
                             .delete()
                             .eq(
                                 'discord_id',
@@ -459,7 +609,9 @@ module.exports = {
                                 gamemode
                             );
 
-                        if (expiredDeleteError) {
+                        if (
+                            expiredDeleteError
+                        ) {
 
                             console.error(
                                 'EXPIRED COOLDOWN DELETE ERROR:',
@@ -473,10 +625,14 @@ module.exports = {
                     // =============================================
 
                     const {
-                        data: existingQueue,
-                        error: queueCheckError
+                        data:
+                            existingQueue,
+                        error:
+                            queueCheckError
                     } = await supabase
-                        .from('queue_members')
+                        .from(
+                            'queue_members'
+                        )
                         .select('*')
                         .eq(
                             'discord_id',
@@ -514,10 +670,14 @@ module.exports = {
                     // =============================================
 
                     const {
-                        data: activeSessions,
-                        error: sessionError
+                        data:
+                            activeSessions,
+                        error:
+                            sessionError
                     } = await supabase
-                        .from('testing_sessions')
+                        .from(
+                            'testing_sessions'
+                        )
                         .select('*')
                         .eq(
                             'player_discord_id',
@@ -547,7 +707,8 @@ module.exports = {
                     // CHECK REAL ACTIVE SESSION
                     // =============================================
 
-                    let realActiveSession = null;
+                    let realActiveSession =
+                        null;
 
                     if (
                         activeSessions &&
@@ -559,7 +720,8 @@ module.exports = {
                             of activeSessions
                         ) {
 
-                            let ticketExists = false;
+                            let ticketExists =
+                                false;
 
                             if (
                                 session.ticket_channel_id
@@ -568,17 +730,22 @@ module.exports = {
                                 try {
 
                                     const channel =
-                                        await interaction.guild.channels.fetch(
-                                            session.ticket_channel_id
-                                        );
+                                        await interaction
+                                            .guild
+                                            .channels
+                                            .fetch(
+                                                session.ticket_channel_id
+                                            );
 
                                     if (channel) {
-                                        ticketExists = true;
+                                        ticketExists =
+                                            true;
                                     }
 
                                 } catch (_) {
 
-                                    ticketExists = false;
+                                    ticketExists =
+                                        false;
                                 }
                             }
 
@@ -595,12 +762,16 @@ module.exports = {
                             // =====================================
 
                             await supabase
-                                .from('testing_sessions')
+                                .from(
+                                    'testing_sessions'
+                                )
                                 .update({
                                     status:
                                         'CLOSED',
+
                                     closed_at:
-                                        new Date().toISOString()
+                                        new Date()
+                                            .toISOString()
                                 })
                                 .eq(
                                     'id',
@@ -617,7 +788,9 @@ module.exports = {
                         }
                     }
 
-                    if (realActiveSession) {
+                    if (
+                        realActiveSession
+                    ) {
 
                         return await interaction.reply({
                             content:
@@ -632,10 +805,14 @@ module.exports = {
                     // =============================================
 
                     const {
-                        error: insertError
+                        error:
+                            insertError
                     } = await supabase
-                        .from('queue_members')
+                        .from(
+                            'queue_members'
+                        )
                         .insert({
+
                             gamemode:
                                 gamemode,
 
@@ -716,9 +893,12 @@ module.exports = {
                 if (action === 'leave') {
 
                     const {
-                        error: deleteError
+                        error:
+                            deleteError
                     } = await supabase
-                        .from('queue_members')
+                        .from(
+                            'queue_members'
+                        )
                         .delete()
                         .eq(
                             'discord_id',
@@ -803,9 +983,12 @@ module.exports = {
                         );
 
                     const {
-                        error: profileError
+                        error:
+                            profileError
                     } = await supabase
-                        .from('players')
+                        .from(
+                            'players'
+                        )
                         .upsert(
                             {
                                 discord_id:
