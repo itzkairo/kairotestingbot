@@ -1,11 +1,10 @@
 const {
-    SlashCommandBuilder,
-    PermissionFlagsBits
+    SlashCommandBuilder
 } = require("discord.js");
 
 const config = require("../../config/config");
 const supabase = require("../../database/supabase");
-const perms = require("../../utils/permissions");
+const fetch = require("node-fetch");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -36,30 +35,33 @@ module.exports = {
 
     async execute(interaction) {
 
-if (interaction.user.id !== process.env.OWNER_ID) {
-    return interaction.reply({
-        content: "❌ Only the bot owner can use this command.",
-        flags: 64
-    });
-}
+        // OWNER ONLY
+        if (interaction.user.id !== process.env.OWNER_ID) {
+            return interaction.reply({
+                content: "❌ Only the bot owner can use this command.",
+                flags: 64
+            });
+        }
 
         await interaction.deferReply({ flags: 64 });
 
         const user = interaction.options.getUser("user");
         const gamemode = interaction.options.getString("gamemode");
 
-        const { data: player } = await supabase
+        // Get player
+        const { data: player, error: playerError } = await supabase
             .from("players")
             .select("*")
             .eq("discord_id", user.id)
             .single();
 
-        if (!player) {
+        if (playerError || !player) {
             return interaction.editReply({
                 content: "❌ Player profile not found."
             });
         }
 
+        // Get gamemode roles
         const gamemodeTiers = config.tiers?.[gamemode];
 
         if (!gamemodeTiers) {
@@ -68,20 +70,24 @@ if (interaction.user.id !== process.env.OWNER_ID) {
             });
         }
 
+        // Get Discord member
         const member = await interaction.guild.members.fetch(user.id);
 
         // Remove every tier role for this gamemode
         const tierRoles = Object.values(gamemodeTiers)
-            .filter(roleId => roleId);
+            .filter(Boolean);
+
+        let removed = 0;
 
         for (const roleId of tierRoles) {
             if (member.roles.cache.has(roleId)) {
                 await member.roles.remove(roleId);
+                removed++;
             }
         }
 
-        // Record removal without deleting history
-        const { error } = await supabase
+        // Save removal in result history
+        const { error: resultError } = await supabase
             .from("results")
             .insert({
                 discord_id: user.id,
@@ -92,14 +98,65 @@ if (interaction.user.id !== process.env.OWNER_ID) {
                 tester_id: interaction.user.id
             });
 
-        if (error) {
-            console.error("Tier Remove DB Error:", error);
+        if (resultError) {
+            console.error("Tier Remove DB Error:", resultError);
         }
 
+        // Sync with website
+        try {
+
+            if (!process.env.WEBSITE_API_URL) {
+                console.error("❌ WEBSITE_API_URL is missing from .env");
+            } else if (!process.env.WEBSITE_BOT_SECRET) {
+                console.error("❌ WEBSITE_BOT_SECRET is missing from .env");
+            } else {
+
+                const response = await fetch(
+                    process.env.WEBSITE_API_URL,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-Bot-Secret": process.env.WEBSITE_BOT_SECRET
+                        },
+                        body: JSON.stringify({
+                            ign: player.ign,
+                            tier: "Unranked",
+                            gamemode: gamemode.toLowerCase(),
+                            userId: user.id,
+                            guildId: interaction.guildId
+                        })
+                    }
+                );
+
+                if (!response.ok) {
+                    console.error(
+                        "❌ Website Sync Error:",
+                        response.status,
+                        await response.text()
+                    );
+                } else {
+                    console.log(
+                        `✅ Website synced: ${player.ign} → ${gamemode} → Unranked`
+                    );
+                }
+            }
+
+        } catch (error) {
+            console.error(
+                "❌ Website Tier Remove Sync Failed:",
+                error
+            );
+        }
+
+        // Final response
         await interaction.editReply({
             content:
-                `✅ Removed **${gamemode}** tier from **${player.ign}**.\n` +
-                `The player is now **Unranked** for this gamemode.`
+                `✅ **Tier Removed Successfully**\n\n` +
+                `Player: **${player.ign}**\n` +
+                `Gamemode: **${gamemode}**\n` +
+                `Status: **Unranked**\n` +
+                `Roles removed: **${removed}**`
         });
     }
 };
