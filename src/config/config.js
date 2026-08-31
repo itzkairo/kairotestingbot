@@ -8,7 +8,7 @@ module.exports = {
 
     roles: {
         tester: '1512150876331184208',
-
+        
         ownerId: '1105165947590938866',
 
         blacklist: '1519345418155065446',
