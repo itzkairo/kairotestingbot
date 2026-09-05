@@ -5,6 +5,7 @@ const {
 
 const supabase = require("../../database/supabase");
 const config = require("../../config/config");
+const emojis = require("../../config/emojis");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -15,14 +16,12 @@ module.exports = {
 
         await interaction.deferReply({ flags: 64 });
 
-        // Start of today
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
 
-        // Get today's results
         const { data: results, error } = await supabase
             .from("results")
-            .select("tester_id, gamemode")
+            .select("tester_id, gamemode, new_tier")
             .gte("created_at", startOfDay.toISOString());
 
         if (error) {
@@ -39,54 +38,52 @@ module.exports = {
             });
         }
 
-        // Tester statistics
+        // Tester stats
         const testers = {};
 
         for (const result of results) {
+            if (!result.tester_id) continue;
 
             if (!testers[result.tester_id]) {
-                testers[result.tester_id] = {
-                    total: 0,
-                    gamemodes: {}
-                };
+                testers[result.tester_id] = 0;
             }
 
-            testers[result.tester_id].total++;
-
-            testers[result.tester_id].gamemodes[result.gamemode] =
-                (testers[result.tester_id].gamemodes[result.gamemode] || 0) + 1;
+            testers[result.tester_id]++;
         }
 
-        // Sort testers by total tests
         const leaderboard = Object.entries(testers)
-            .sort((a, b) => b[1].total - a[1].total);
+            .sort((a, b) => b[1] - a[1]);
 
-        const leaderboardText = leaderboard
-            .map(([testerId, stats], index) => {
-                return `**${index + 1}.** <@${testerId}> — **${stats.total} tests**`;
-            })
+        const testerText = leaderboard
+            .map(([id, count], index) =>
+                `${emojis.tester} **${index + 1}.** <@${id}> — **${count}**`
+            )
             .join("\n");
 
-        // Gamemode statistics
-        const gamemodeStats = {};
+        // Gamemode stats
+        const gamemodes = {};
 
         for (const result of results) {
-            gamemodeStats[result.gamemode] =
-                (gamemodeStats[result.gamemode] || 0) + 1;
+            if (!gamemodes[result.gamemode]) {
+                gamemodes[result.gamemode] = 0;
+            }
+
+            gamemodes[result.gamemode]++;
         }
 
-        const gamemodeText = Object.entries(gamemodeStats)
+        const gamemodeText = Object.entries(gamemodes)
             .sort((a, b) => b[1] - a[1])
-            .map(([gamemode, count]) =>
-                `**${gamemode}** — ${count}`
-            )
+            .map(([gamemode, count]) => {
+                const emoji = emojis.gamemodes[gamemode] || "";
+                return `${emoji} **${gamemode}** — **${count}**`;
+            })
             .join("\n");
 
         const embed = new EmbedBuilder()
             .setColor(config.colors.primary)
             .setTitle("📊 Daily Testing Statistics")
             .setDescription(
-                `Statistics for **${interaction.guild.name}**`
+                `Today's testing activity in **${interaction.guild.name}**`
             )
             .addFields(
                 {
@@ -100,13 +97,13 @@ module.exports = {
                     inline: true
                 },
                 {
-                    name: "🏆 Tester Leaderboard",
-                    value: leaderboardText || "No testers.",
+                    name: "🏆 Tester Activity",
+                    value: testerText || "No tester data.",
                     inline: false
                 },
                 {
                     name: "🎮 Gamemode Breakdown",
-                    value: gamemodeText || "No data.",
+                    value: gamemodeText || "No gamemode data.",
                     inline: false
                 }
             )

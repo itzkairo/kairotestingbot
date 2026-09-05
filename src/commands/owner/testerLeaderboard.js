@@ -1,94 +1,53 @@
 const {
     SlashCommandBuilder,
-    EmbedBuilder,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    MessageFlags
-} = require('discord.js');
+    EmbedBuilder
+} = require("discord.js");
 
-const supabase = require('../../database/supabase');
+const supabase = require("../../database/supabase");
+const config = require("../../config/config");
+const emojis = require("../../config/emojis");
 
 module.exports = {
 
     data: new SlashCommandBuilder()
-        .setName('testerleaderboard')
-        .setDescription('Show the testers with the most completed tests'),
+        .setName("testerleaderboard")
+        .setDescription("Show the tester leaderboard"),
 
     async execute(interaction) {
 
-        await interaction.deferReply();
+        await interaction.deferReply({ flags: 64 });
 
         try {
 
-            // =============================================
-            // GET ALL RESULTS
-            // =============================================
-
-            const {
-                data: results,
-                error
-            } = await supabase
-                .from('results')
-                .select('tester_id');
+            const { data: results, error } = await supabase
+                .from("results")
+                .select("tester_id");
 
             if (error) {
-
-                console.error(
-                    'TESTER LEADERBOARD ERROR:',
-                    error
-                );
+                console.error("Tester Leaderboard Error:", error);
 
                 return interaction.editReply({
-                    content:
-                        '❌ Failed to load the tester leaderboard.'
+                    content: "❌ Failed to load the tester leaderboard."
                 });
             }
-
-            // =============================================
-            // NO RESULTS
-            // =============================================
 
             if (!results || results.length === 0) {
 
                 const embed = new EmbedBuilder()
-                    .setTitle('🏆 Tester Leaderboard')
-                    .setColor(0x8B0000)
-                    .setDescription(
-                        'No tests have been completed yet.'
-                    )
+                    .setColor(config.colors.primary)
+                    .setTitle("🏆 Tester Leaderboard")
+                    .setDescription("No tests have been completed yet.")
                     .setFooter({
-                        text:
-                            'KairoTiers • Tester Statistics'
+                        text: "KairoTiers • Tester Leaderboard"
                     })
                     .setTimestamp();
 
-                const row =
-                    new ActionRowBuilder()
-                        .addComponents(
-                            new ButtonBuilder()
-                                .setCustomId(
-                                    'tester_leaderboard_reset'
-                                )
-                                .setLabel(
-                                    'Reset Leaderboard'
-                                )
-                                .setEmoji('🗑️')
-                                .setStyle(
-                                    ButtonStyle.Danger
-                                )
-                        );
-
                 return interaction.editReply({
-                    embeds: [embed],
-                    components: [row]
+                    embeds: [embed]
                 });
             }
 
-            // =============================================
-            // COUNT TESTS PER TESTER
-            // =============================================
-
+            // Count tests
             const testerCounts = {};
 
             for (const result of results) {
@@ -99,111 +58,62 @@ module.exports = {
                     (testerCounts[result.tester_id] || 0) + 1;
             }
 
-            // =============================================
-            // SORT LEADERBOARD
-            // =============================================
+            const leaderboard = Object.entries(testerCounts)
+                .sort((a, b) => b[1] - a[1]);
 
-            const leaderboard =
-                Object.entries(testerCounts)
-                    .sort((a, b) => b[1] - a[1]);
+            // Leaderboard text
+            const leaderboardText = leaderboard
+                .map(([testerId, count], index) => {
 
-            // =============================================
-            // BUILD DESCRIPTION
-            // =============================================
+                    let position;
 
-            let description = '';
+                    if (index === 0) {
+                        position = "🥇";
+                    } else if (index === 1) {
+                        position = "🥈";
+                    } else if (index === 2) {
+                        position = "🥉";
+                    } else {
+                        position = `**${index + 1}.**`;
+                    }
 
-            for (
-                let i = 0;
-                i < leaderboard.length;
-                i++
-            ) {
+                    return `${position} ${emojis.tester} <@${testerId}> — **${count} tests**`;
+                })
+                .join("\n");
 
-                const [
-                    testerId,
-                    count
-                ] = leaderboard[i];
-
-                const position = i + 1;
-
-                let medal;
-
-                if (position === 1) {
-                    medal = '🥇';
-                } else if (position === 2) {
-                    medal = '🥈';
-                } else if (position === 3) {
-                    medal = '🥉';
-                } else {
-                    medal = `**${position}.**`;
-                }
-
-                description +=
-                    `${medal} <@${testerId}> — **${count} ${count === 1 ? 'test' : 'tests'}**\n`;
-            }
-
-            // =============================================
-            // EMBED
-            // =============================================
-
-            const embed =
-                new EmbedBuilder()
-                    .setTitle('🏆 Tester Leaderboard')
-                    .setColor(0x8B0000)
-                    .setDescription(
-                        description
-                    )
-                    .addFields({
-                        name: '📊 Total Tests',
-                        value:
-                            `**${results.length}** tests completed`,
-                        inline: false
-                    })
-                    .setFooter({
-                        text:
-                            'KairoTiers • Tester Statistics'
-                    })
-                    .setTimestamp();
-
-            // =============================================
-            // RESET BUTTON
-            // =============================================
-
-            const row =
-                new ActionRowBuilder()
-                    .addComponents(
-                        new ButtonBuilder()
-                            .setCustomId(
-                                'tester_leaderboard_reset'
-                            )
-                            .setLabel(
-                                'Reset Leaderboard'
-                            )
-                            .setEmoji('🗑️')
-                            .setStyle(
-                                ButtonStyle.Danger
-                            )
-                    );
-
-            // =============================================
-            // SEND
-            // =============================================
+            const embed = new EmbedBuilder()
+                .setColor(config.colors.primary)
+                .setTitle("🏆 Tester Leaderboard")
+                .setDescription(
+                    `Top testers ranked by their total completed tests.\n\n${leaderboardText}`
+                )
+                .addFields(
+                    {
+                        name: "🧪 Total Tests",
+                        value: `**${results.length}**`,
+                        inline: true
+                    },
+                    {
+                        name: "👥 Testers",
+                        value: `**${leaderboard.length}**`,
+                        inline: true
+                    }
+                )
+                .setFooter({
+                    text: "KairoTiers • Tester Leaderboard"
+                })
+                .setTimestamp();
 
             await interaction.editReply({
-                embeds: [embed],
-                components: [row]
+                embeds: [embed]
             });
 
         } catch (error) {
 
-            console.error(
-                'TESTER LEADERBOARD COMMAND ERROR:',
-                error
-            );
+            console.error("Tester Leaderboard Error:", error);
 
             await interaction.editReply({
-                content:
-                    '❌ Something went wrong while loading the leaderboard.'
+                content: "❌ Something went wrong while loading the leaderboard."
             }).catch(() => {});
         }
     }
