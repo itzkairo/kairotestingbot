@@ -6,32 +6,9 @@ const express = require('express');
 
 dotenv.config();
 
-// =========================
-// Express Web Server
-// =========================
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-    res.status(200).send('KairoTiers Bot is online!');
-});
-
-app.get('/health', (req, res) => {
-    res.status(200).json({
-        status: 'online',
-        bot: client?.isReady() ? 'connected' : 'connecting',
-        uptime: process.uptime()
-    });
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🌐 Web server running on port ${PORT}`);
-});
-
-// =========================
+// ==========================================
 // Discord Client
-// =========================
+// ==========================================
 
 const client = new Client({
     intents: [
@@ -43,9 +20,32 @@ const client = new Client({
 
 client.commands = new Collection();
 
-// =========================
+// ==========================================
+// Express Web Server
+// ==========================================
+
+const app = express();
+const PORT = process.env.PORT || 10000;
+
+app.get('/', (req, res) => {
+    res.status(200).send('KairoTiers Bot is online!');
+});
+
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'online',
+        bot: client.isReady() ? 'connected' : 'connecting',
+        uptime: process.uptime()
+    });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🌐 Web server running on port ${PORT}`);
+});
+
+// ==========================================
 // Load Commands
-// =========================
+// ==========================================
 
 const commandsPath = path.join(__dirname, 'src/commands');
 const commandFolders = fs.readdirSync(commandsPath);
@@ -63,15 +63,17 @@ for (const folder of commandFolders) {
 
         if ('data' in command && 'execute' in command) {
             client.commands.set(command.data.name, command);
+            console.log(`✅ Loaded Command: ${command.data.name}`);
         }
     }
 }
 
-// =========================
+// ==========================================
 // Load Events
-// =========================
+// ==========================================
 
 const eventsPath = path.join(__dirname, 'src/events');
+
 const eventFiles = fs
     .readdirSync(eventsPath)
     .filter(file => file.endsWith('.js'));
@@ -85,10 +87,18 @@ for (const file of eventFiles) {
     } else {
         client.on(event.name, (...args) => event.execute(...args));
     }
+
+    console.log(`✅ Loaded Event: ${event.name}`);
 }
 
-// =========================
+// ==========================================
 // Login
-// =========================
+// ==========================================
 
-client.login(process.env.TOKEN);
+client.login(process.env.TOKEN)
+    .then(() => {
+        console.log('🤖 KairoTiers Bot Logged In');
+    })
+    .catch(error => {
+        console.error('❌ Discord Login Failed:', error);
+    });
