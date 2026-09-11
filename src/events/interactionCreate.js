@@ -3,7 +3,8 @@ const {
     TextInputBuilder,
     TextInputStyle,
     ActionRowBuilder,
-    MessageFlags
+    MessageFlags,
+    EmbedBuilder
 } = require('discord.js');
 
 const config = require('../config/config');
@@ -39,27 +40,16 @@ module.exports = {
                         error
                     );
 
-                    if (interaction.replied) {
-
+                    if (interaction.replied || interaction.deferred) {
                         await interaction.editReply({
                             content:
                                 '❌ An error occurred while executing this command.'
                         }).catch(() => {});
-
-                    } else if (interaction.deferred) {
-
-                        await interaction.editReply({
-                            content:
-                                '❌ An error occurred while executing this command.'
-                        }).catch(() => {});
-
                     } else {
-
                         await interaction.reply({
                             content:
                                 '❌ An error occurred while executing this command.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         }).catch(() => {});
                     }
                 }
@@ -79,44 +69,25 @@ module.exports = {
                 // TESTER LEADERBOARD RESET
                 // =================================================
 
-                if (
-                    customId ===
-                    'tester_leaderboard_reset'
-                ) {
-
-                    // =============================================
-                    // OWNER CHECK
-                    // =============================================
+                if (customId === 'tester_leaderboard_reset') {
 
                     if (
                         interaction.user.id !==
                         config.ownerId
                     ) {
-
                         return await interaction.reply({
                             content:
                                 '❌ Only the bot owner can reset the tester leaderboard.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
-                    // =============================================
-                    // RESET LEADERBOARD
-                    // =============================================
-
                     try {
 
-                        const {
-                            error
-                        } = await supabase
+                        const { error } = await supabase
                             .from('results')
                             .delete()
-                            .not(
-                                'id',
-                                'is',
-                                null
-                            );
+                            .not('id', 'is', null);
 
                         if (error) {
 
@@ -128,16 +99,14 @@ module.exports = {
                             return await interaction.reply({
                                 content:
                                     '❌ Failed to reset the tester leaderboard.',
-                                flags:
-                                    MessageFlags.Ephemeral
+                                flags: MessageFlags.Ephemeral
                             });
                         }
 
                         return await interaction.reply({
                             content:
                                 '✅ Tester leaderboard has been reset successfully.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
 
                     } catch (error) {
@@ -150,8 +119,7 @@ module.exports = {
                         return await interaction.reply({
                             content:
                                 '❌ Something went wrong while resetting the leaderboard.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
                 }
@@ -164,200 +132,105 @@ module.exports = {
 
                     const modal =
                         new ModalBuilder()
-                            .setCustomId(
-                                'registration_modal'
-                            )
-                            .setTitle(
-                                'Profile Registration'
-                            );
+                            .setCustomId('registration_modal')
+                            .setTitle('Profile Registration');
 
                     const ignInput =
                         new TextInputBuilder()
                             .setCustomId('ign')
-                            .setLabel(
-                                'Minecraft IGN'
-                            )
-                            .setStyle(
-                                TextInputStyle.Short
-                            )
+                            .setLabel('Minecraft IGN')
+                            .setStyle(TextInputStyle.Short)
                             .setRequired(true);
 
                     const regionInput =
                         new TextInputBuilder()
                             .setCustomId('region')
-                            .setLabel(
-                                'Region (e.g. EU, NA, AS)'
-                            )
-                            .setStyle(
-                                TextInputStyle.Short
-                            )
+                            .setLabel('Region (e.g. EU, NA, AS)')
+                            .setStyle(TextInputStyle.Short)
                             .setRequired(true);
 
                     const accInput =
                         new TextInputBuilder()
                             .setCustomId('acc_type')
-                            .setLabel(
-                                'Account Type (Premium/Cracked)'
-                            )
-                            .setStyle(
-                                TextInputStyle.Short
-                            )
+                            .setLabel('Account Type (Premium/Cracked)')
+                            .setStyle(TextInputStyle.Short)
                             .setRequired(true);
 
                     modal.addComponents(
-
-                        new ActionRowBuilder()
-                            .addComponents(
-                                ignInput
-                            ),
-
-                        new ActionRowBuilder()
-                            .addComponents(
-                                regionInput
-                            ),
-
-                        new ActionRowBuilder()
-                            .addComponents(
-                                accInput
-                            )
+                        new ActionRowBuilder().addComponents(ignInput),
+                        new ActionRowBuilder().addComponents(regionInput),
+                        new ActionRowBuilder().addComponents(accInput)
                     );
 
-                    return await interaction.showModal(
-                        modal
-                    );
+                    return await interaction.showModal(modal);
                 }
 
                 // =================================================
                 // WAITLIST BUTTONS
                 // =================================================
 
-                if (
-                    customId.startsWith(
-                        'waitlist_'
-                    )
-                ) {
+                if (customId.startsWith('waitlist_')) {
 
                     const gamemodeMap = {
-
-                        waitlist_axe:
-                            'Axe',
-
-                        waitlist_sword:
-                            'Sword',
-
-                        waitlist_uhc:
-                            'UHC',
-
-                        waitlist_smp:
-                            'SMP',
-
-                        waitlist_diapot:
-                            'DiaPot',
-
-                        waitlist_mace:
-                            'Mace',
-
-                        waitlist_crystal:
-                            'Crystal',
-
-                        waitlist_nethpot:
-                            'NethPot'
+                        waitlist_axe: 'Axe',
+                        waitlist_sword: 'Sword',
+                        waitlist_uhc: 'UHC',
+                        waitlist_smp: 'SMP',
+                        waitlist_diapot: 'DiaPot',
+                        waitlist_mace: 'Mace',
+                        waitlist_crystal: 'Crystal',
+                        waitlist_nethpot: 'NethPot'
                     };
 
-                    const gamemode =
-                        gamemodeMap[
-                            customId
-                        ];
+                    const gamemode = gamemodeMap[customId];
 
                     if (!gamemode) {
-
                         return await interaction.reply({
-                            content:
-                                '❌ Invalid waitlist.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            content: '❌ Invalid waitlist.',
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
-                    // =============================================
-                    // BLACKLIST
-                    // =============================================
-
-                    if (
-                        perms.isBlacklisted(
-                            interaction.member
-                        )
-                    ) {
-
+                    if (perms.isBlacklisted(interaction.member)) {
                         return await interaction.reply({
                             content:
                                 '❌ You cannot join the testing waitlist.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
-                    // =============================================
-                    // VERIFIED
-                    // =============================================
-
-                    if (
-                        !perms.isVerified(
-                            interaction.member
-                        )
-                    ) {
-
+                    if (!perms.isVerified(interaction.member)) {
                         return await interaction.reply({
                             content:
-                                '❌ **Register your profile first.**\n\n' +
-                                'Click **Register / Update Profile** before selecting a waitlist.',
-                            flags:
-                                MessageFlags.Ephemeral
+                                '❌ **Register your profile first.**\n\nClick **Register / Update Profile** before selecting a waitlist.',
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
-                    // =============================================
-                    // ROLE
-                    // =============================================
-
                     const roleId =
-                        config.roles.waitlist?.[
-                            gamemode
-                        ];
+                        config.roles.waitlist?.[gamemode];
 
                     if (!roleId) {
-
                         return await interaction.reply({
                             content:
                                 `❌ Waitlist role for **${gamemode}** is not configured.`,
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
                     const role =
-                        interaction.guild.roles.cache.get(
-                            roleId
-                        );
+                        interaction.guild.roles.cache.get(roleId);
 
                     if (!role) {
-
                         return await interaction.reply({
                             content:
                                 '❌ The waitlist role could not be found.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
-                    // =============================================
-                    // LEAVE WAITLIST
-                    // =============================================
-
                     if (
-                        interaction.member.roles.cache.has(
-                            roleId
-                        )
+                        interaction.member.roles.cache.has(roleId)
                     ) {
 
                         try {
@@ -370,8 +243,7 @@ module.exports = {
                             return await interaction.reply({
                                 content:
                                     `✅ You left the **${gamemode}** waitlist.`,
-                                flags:
-                                    MessageFlags.Ephemeral
+                                flags: MessageFlags.Ephemeral
                             });
 
                         } catch (error) {
@@ -384,15 +256,10 @@ module.exports = {
                             return await interaction.reply({
                                 content:
                                     '❌ Could not remove the waitlist role.',
-                                flags:
-                                    MessageFlags.Ephemeral
+                                flags: MessageFlags.Ephemeral
                             });
                         }
                     }
-
-                    // =============================================
-                    // JOIN WAITLIST
-                    // =============================================
 
                     try {
 
@@ -404,8 +271,7 @@ module.exports = {
                         return await interaction.reply({
                             content:
                                 `✅ You joined the **${gamemode}** waitlist!`,
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
 
                     } catch (error) {
@@ -418,8 +284,7 @@ module.exports = {
                         return await interaction.reply({
                             content:
                                 '❌ I could not give you the waitlist role. Please contact staff.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
                 }
@@ -428,16 +293,12 @@ module.exports = {
                 // QUEUE BUTTON PARSER
                 // =================================================
 
-                const parts =
-                    customId.split('_');
+                const parts = customId.split('_');
 
-                const action =
-                    parts[0];
+                const action = parts[0];
 
                 const gamemode =
-                    parts
-                        .slice(2)
-                        .join('_');
+                    parts.slice(2).join('_');
 
                 if (
                     action !== 'join' &&
@@ -456,12 +317,10 @@ module.exports = {
                         interaction.member
                     )
                 ) {
-
                     return await interaction.reply({
                         content:
                             '❌ You are blacklisted from joining KairoTiers testing queues.',
-                        flags:
-                            MessageFlags.Ephemeral
+                        flags: MessageFlags.Ephemeral
                     });
                 }
 
@@ -474,12 +333,10 @@ module.exports = {
                         interaction.member
                     )
                 ) {
-
                     return await interaction.reply({
                         content:
                             '❌ **Register your profile first.**',
-                        flags:
-                            MessageFlags.Ephemeral
+                        flags: MessageFlags.Ephemeral
                     });
                 }
 
@@ -490,14 +347,11 @@ module.exports = {
                 if (action === 'refresh') {
 
                     try {
-
                         await queueRenderer.updateQueuePanel(
                             interaction.client,
                             gamemode
                         );
-
                     } catch (error) {
-
                         console.error(
                             'QUEUE REFRESH ERROR:',
                             error
@@ -507,8 +361,7 @@ module.exports = {
                     return await interaction.reply({
                         content:
                             '🔄 Queue refreshed.',
-                        flags:
-                            MessageFlags.Ephemeral
+                        flags: MessageFlags.Ephemeral
                     });
                 }
 
@@ -519,19 +372,15 @@ module.exports = {
                 if (action === 'join') {
 
                     // =============================================
-                    // 7 DAY GAMEMODE-SPECIFIC COOLDOWN
+                    // COOLDOWN CHECK
                     // =============================================
 
                     const {
                         data: cooldown,
                         error: cooldownError
                     } = await supabase
-                        .from(
-                            'testing_cooldowns'
-                        )
-                        .select(
-                            'cooldown_until'
-                        )
+                        .from('testing_cooldowns')
+                        .select('cooldown_until')
                         .eq(
                             'discord_id',
                             interaction.user.id
@@ -552,14 +401,9 @@ module.exports = {
                         return await interaction.reply({
                             content:
                                 '❌ Could not check your testing cooldown. Please contact staff.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
-
-                    // =============================================
-                    // COOLDOWN ACTIVE
-                    // =============================================
 
                     if (cooldown) {
 
@@ -575,30 +419,19 @@ module.exports = {
 
                             const unix =
                                 Math.floor(
-                                    cooldownUntil.getTime() /
-                                    1000
+                                    cooldownUntil.getTime() / 1000
                                 );
 
                             return await interaction.reply({
                                 content:
                                     `⏳ **You are on ${gamemode} testing cooldown.**\n\n` +
                                     `You can test **${gamemode}** again <t:${unix}:R>.`,
-                                flags:
-                                    MessageFlags.Ephemeral
+                                flags: MessageFlags.Ephemeral
                             });
                         }
 
-                        // =========================================
-                        // COOLDOWN EXPIRED
-                        // =========================================
-
-                        const {
-                            error:
-                                expiredDeleteError
-                        } = await supabase
-                            .from(
-                                'testing_cooldowns'
-                            )
+                        await supabase
+                            .from('testing_cooldowns')
                             .delete()
                             .eq(
                                 'discord_id',
@@ -608,31 +441,17 @@ module.exports = {
                                 'gamemode',
                                 gamemode
                             );
-
-                        if (
-                            expiredDeleteError
-                        ) {
-
-                            console.error(
-                                'EXPIRED COOLDOWN DELETE ERROR:',
-                                expiredDeleteError
-                            );
-                        }
                     }
 
                     // =============================================
-                    // ALREADY IN QUEUE
+                    // ALREADY IN ANY QUEUE
                     // =============================================
 
                     const {
-                        data:
-                            existingQueue,
-                        error:
-                            queueCheckError
+                        data: existingQueue,
+                        error: queueCheckError
                     } = await supabase
-                        .from(
-                            'queue_members'
-                        )
+                        .from('queue_members')
                         .select('*')
                         .eq(
                             'discord_id',
@@ -650,8 +469,7 @@ module.exports = {
                         return await interaction.reply({
                             content:
                                 '❌ Could not check your queue status.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
@@ -660,8 +478,7 @@ module.exports = {
                         return await interaction.reply({
                             content:
                                 '❌ You are already in a queue! Leave your current queue first.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
@@ -670,14 +487,10 @@ module.exports = {
                     // =============================================
 
                     const {
-                        data:
-                            activeSessions,
-                        error:
-                            sessionError
+                        data: activeSessions,
+                        error: sessionError
                     } = await supabase
-                        .from(
-                            'testing_sessions'
-                        )
+                        .from('testing_sessions')
                         .select('*')
                         .eq(
                             'player_discord_id',
@@ -698,17 +511,11 @@ module.exports = {
                         return await interaction.reply({
                             content:
                                 '❌ Could not check your testing session.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
-                    // =============================================
-                    // CHECK REAL ACTIVE SESSION
-                    // =============================================
-
-                    let realActiveSession =
-                        null;
+                    let realActiveSession = null;
 
                     if (
                         activeSessions &&
@@ -720,8 +527,7 @@ module.exports = {
                             of activeSessions
                         ) {
 
-                            let ticketExists =
-                                false;
+                            let ticketExists = false;
 
                             if (
                                 session.ticket_channel_id
@@ -738,40 +544,25 @@ module.exports = {
                                             );
 
                                     if (channel) {
-                                        ticketExists =
-                                            true;
+                                        ticketExists = true;
                                     }
 
                                 } catch (_) {
-
-                                    ticketExists =
-                                        false;
+                                    ticketExists = false;
                                 }
                             }
 
                             if (ticketExists) {
-
-                                realActiveSession =
-                                    session;
-
+                                realActiveSession = session;
                                 break;
                             }
 
-                            // =====================================
-                            // CLEAN STALE SESSION
-                            // =====================================
-
                             await supabase
-                                .from(
-                                    'testing_sessions'
-                                )
+                                .from('testing_sessions')
                                 .update({
-                                    status:
-                                        'CLOSED',
-
+                                    status: 'CLOSED',
                                     closed_at:
-                                        new Date()
-                                            .toISOString()
+                                        new Date().toISOString()
                                 })
                                 .eq(
                                     'id',
@@ -781,22 +572,15 @@ module.exports = {
                                     'status',
                                     'ACTIVE'
                                 );
-
-                            console.log(
-                                `Cleaned stale testing session ${session.id} for ${interaction.user.id}`
-                            );
                         }
                     }
 
-                    if (
-                        realActiveSession
-                    ) {
+                    if (realActiveSession) {
 
                         return await interaction.reply({
                             content:
                                 '❌ You already have an active testing session.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
@@ -805,25 +589,21 @@ module.exports = {
                     // =============================================
 
                     const {
-                        error:
-                            insertError
+                        data: insertedMember,
+                        error: insertError
                     } = await supabase
-                        .from(
-                            'queue_members'
-                        )
+                        .from('queue_members')
                         .insert({
-
-                            gamemode:
-                                gamemode,
-
+                            gamemode,
                             discord_id:
                                 interaction.user.id,
-
                             priority:
                                 perms.hasPriority(
                                     interaction.member
                                 )
-                        });
+                        })
+                        .select()
+                        .single();
 
                     if (insertError) {
 
@@ -833,36 +613,126 @@ module.exports = {
                         );
 
                         if (
-                            insertError.code ===
-                            '23505'
+                            insertError.code === '23505'
                         ) {
-
                             return await interaction.reply({
                                 content:
                                     '❌ You are already in a queue! Leave your current queue first.',
-                                flags:
-                                    MessageFlags.Ephemeral
+                                flags: MessageFlags.Ephemeral
                             });
                         }
 
                         return await interaction.reply({
                             content:
                                 '❌ Failed to join the queue. Please try again.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
                     // =============================================
-                    // SUCCESS
+                    // GET CURRENT POSITION
+                    // =============================================
+
+                    const {
+                        data: currentMembers,
+                        error: positionError
+                    } = await supabase
+                        .from('queue_members')
+                        .select('*')
+                        .eq(
+                            'gamemode',
+                            gamemode
+                        )
+                        .order('priority', {
+                            ascending: false
+                        })
+                        .order('joined_at', {
+                            ascending: true
+                        });
+
+                    if (positionError) {
+
+                        console.error(
+                            'QUEUE POSITION ERROR:',
+                            positionError
+                        );
+                    }
+
+                    let position = null;
+
+                    if (
+                        currentMembers &&
+                        currentMembers.length > 0
+                    ) {
+
+                        const index =
+                            currentMembers.findIndex(
+                                member =>
+                                    member.id ===
+                                    insertedMember.id
+                            );
+
+                        if (index !== -1) {
+                            position = index + 1;
+                        }
+                    }
+
+                    // =============================================
+                    // SUCCESS REPLY
                     // =============================================
 
                     await interaction.reply({
                         content:
-                            `✅ You joined the **${gamemode}** queue.`,
-                        flags:
-                            MessageFlags.Ephemeral
+                            `✅ You joined the **${gamemode}** queue.` +
+                            (position
+                                ? ` You are currently **#${position}**.`
+                                : ''),
+                        flags: MessageFlags.Ephemeral
                     });
+
+                    // =============================================
+                    // POSITION DM
+                    // =============================================
+
+                    if (
+                        position === 1 ||
+                        position === 2
+                    ) {
+
+                        try {
+
+                            const dmEmbed =
+                                new EmbedBuilder()
+                                    .setColor(
+                                        config.colors.primary
+                                    )
+                                    .setTitle(
+                                        position === 1
+                                            ? '🔔 You are #1'
+                                            : '🔔 You are #2'
+                                    )
+                                    .setDescription(
+                                        position === 1
+                                            ? `You are currently **#1** in the **${gamemode}** queue.\n\nPlease be ready. Your testing ticket will be opened shortly.`
+                                            : `You are currently **#2** in the **${gamemode}** queue.\n\nPlease be ready for your test.`
+                                    )
+                                    .setFooter({
+                                        text:
+                                            'KairoTiers • Testing Queue'
+                                    });
+
+                            await interaction.user.send({
+                                embeds: [dmEmbed]
+                            });
+
+                        } catch (dmError) {
+
+                            console.error(
+                                `POSITION DM FAILED [${interaction.user.id}]:`,
+                                dmError.message
+                            );
+                        }
+                    }
 
                     // =============================================
                     // UPDATE QUEUE PANEL
@@ -893,12 +763,39 @@ module.exports = {
                 if (action === 'leave') {
 
                     const {
-                        error:
-                            deleteError
+                        data: leavingMember,
+                        error: leavingError
                     } = await supabase
-                        .from(
-                            'queue_members'
+                        .from('queue_members')
+                        .select('*')
+                        .eq(
+                            'discord_id',
+                            interaction.user.id
                         )
+                        .eq(
+                            'gamemode',
+                            gamemode
+                        )
+                        .maybeSingle();
+
+                    if (leavingError) {
+
+                        console.error(
+                            'QUEUE LEAVE CHECK ERROR:',
+                            leavingError
+                        );
+
+                        return await interaction.reply({
+                            content:
+                                '❌ Failed to check your queue status.',
+                            flags: MessageFlags.Ephemeral
+                        });
+                    }
+
+                    const {
+                        error: deleteError
+                    } = await supabase
+                        .from('queue_members')
                         .delete()
                         .eq(
                             'discord_id',
@@ -919,17 +816,114 @@ module.exports = {
                         return await interaction.reply({
                             content:
                                 '❌ Failed to leave the queue.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
                     await interaction.reply({
                         content:
                             '✅ You left the queue.',
-                        flags:
-                            MessageFlags.Ephemeral
+                        flags: MessageFlags.Ephemeral
                     });
+
+                    // =============================================
+                    // UPDATE POSITIONS AFTER LEAVE
+                    // =============================================
+
+                    try {
+
+                        const {
+                            data: remainingMembers,
+                            error: remainingError
+                        } = await supabase
+                            .from('queue_members')
+                            .select('*')
+                            .eq(
+                                'gamemode',
+                                gamemode
+                            )
+                            .order('priority', {
+                                ascending: false
+                            })
+                            .order('joined_at', {
+                                ascending: true
+                            });
+
+                        if (remainingError) {
+                            throw remainingError;
+                        }
+
+                        // =========================================
+                        // DM NEW #1 / #2
+                        // =========================================
+
+                        for (
+                            let i = 0;
+                            i < Math.min(
+                                remainingMembers.length,
+                                2
+                            );
+                            i++
+                        ) {
+
+                            const member =
+                                remainingMembers[i];
+
+                            const newPosition =
+                                i + 1;
+
+                            // Get the player's Discord user
+                            try {
+
+                                const user =
+                                    await interaction.client.users.fetch(
+                                        member.discord_id
+                                    );
+
+                                const dmEmbed =
+                                    new EmbedBuilder()
+                                        .setColor(
+                                            config.colors.primary
+                                        )
+                                        .setTitle(
+                                            newPosition === 1
+                                                ? '🔔 You are #1'
+                                                : '🔔 You are #2'
+                                        )
+                                        .setDescription(
+                                            newPosition === 1
+                                                ? `You are now **#1** in the **${gamemode}** queue.\n\nPlease be ready. Your testing ticket will be opened shortly.`
+                                                : `You are now **#2** in the **${gamemode}** queue.\n\nPlease be ready for your test.`
+                                        )
+                                        .setFooter({
+                                            text:
+                                                'KairoTiers • Testing Queue'
+                                        });
+
+                                await user.send({
+                                    embeds: [dmEmbed]
+                                });
+
+                            } catch (dmError) {
+
+                                console.error(
+                                    `POSITION DM FAILED [${member.discord_id}]:`,
+                                    dmError.message
+                                );
+                            }
+                        }
+
+                    } catch (error) {
+
+                        console.error(
+                            'POSITION UPDATE ERROR:',
+                            error
+                        );
+                    }
+
+                    // =============================================
+                    // UPDATE QUEUE PANEL
+                    // =============================================
 
                     try {
 
@@ -958,10 +952,6 @@ module.exports = {
 
             if (interaction.isModalSubmit()) {
 
-                // =================================================
-                // REGISTRATION MODAL
-                // =================================================
-
                 if (
                     interaction.customId ===
                     'registration_modal'
@@ -983,22 +973,17 @@ module.exports = {
                         );
 
                     const {
-                        error:
-                            profileError
+                        error: profileError
                     } = await supabase
-                        .from(
-                            'players'
-                        )
+                        .from('players')
                         .upsert(
                             {
                                 discord_id:
                                     interaction.user.id,
 
-                                ign:
-                                    ign,
+                                ign,
 
-                                region:
-                                    region,
+                                region,
 
                                 account_type:
                                     accType,
@@ -1030,10 +1015,6 @@ module.exports = {
                         });
                     }
 
-                    // =============================================
-                    // VERIFIED ROLE
-                    // =============================================
-
                     try {
 
                         await interaction.member.roles.add(
@@ -1051,8 +1032,7 @@ module.exports = {
                     return await interaction.reply({
                         content:
                             `✅ Profile updated for **${ign}**.\nYou can now join testing queues.`,
-                        flags:
-                            MessageFlags.Ephemeral
+                        flags: MessageFlags.Ephemeral
                     });
                 }
 
@@ -1060,10 +1040,6 @@ module.exports = {
             }
 
         } catch (error) {
-
-            // =====================================================
-            // GLOBAL INTERACTION ERROR HANDLER
-            // =====================================================
 
             console.error(
                 'INTERACTION CREATE ERROR:',
@@ -1086,8 +1062,7 @@ module.exports = {
             await interaction.reply({
                 content:
                     '❌ Something went wrong. Please try again.',
-                flags:
-                    MessageFlags.Ephemeral
+                flags: MessageFlags.Ephemeral
             }).catch(() => {});
         }
     }
