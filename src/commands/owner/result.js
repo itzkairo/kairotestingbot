@@ -51,6 +51,10 @@ module.exports = {
 
     async execute(interaction) {
 
+        // =====================================================
+        // TESTER CHECK
+        // =====================================================
+
         if (!perms.isTester(interaction.member)) {
             return interaction.reply({
                 content: '❌ Unauthorized.',
@@ -64,33 +68,14 @@ module.exports = {
 
         try {
 
-            const user = interaction.options.getUser('user');
-            const tier = interaction.options.getString('tier');
-            const gamemode = interaction.options.getString('gamemode');
+            const user =
+                interaction.options.getUser('user');
 
-            // =====================================================
-            // PLAYER TIER COLUMN
-            // =====================================================
+            const tier =
+                interaction.options.getString('tier');
 
-            const tierColumnMap = {
-                Sword: 'sword_tier',
-                Axe: 'axe_tier',
-                Mace: 'mace_tier',
-                DiaPot: 'diapot_tier',
-                NethPot: 'nethpot_tier',
-                SMP: 'smp_tier',
-                Crystal: 'crystal_tier',
-                UHC: 'uhc_tier'
-            };
-
-            const tierColumn = tierColumnMap[gamemode];
-
-            if (!tierColumn) {
-                return interaction.editReply({
-                    content:
-                        `❌ No database tier column is configured for **${gamemode}**.`
-                });
-            }
+            const gamemode =
+                interaction.options.getString('gamemode');
 
             // =====================================================
             // PLAYER PROFILE
@@ -106,8 +91,9 @@ module.exports = {
                 .maybeSingle();
 
             if (playerError) {
+
                 console.error(
-                    '❌ Player lookup error:',
+                    '❌ PLAYER LOOKUP ERROR:',
                     playerError
                 );
 
@@ -118,6 +104,7 @@ module.exports = {
             }
 
             if (!player) {
+
                 return interaction.editReply({
                     content:
                         '❌ Player profile not found.'
@@ -126,24 +113,43 @@ module.exports = {
 
             // =====================================================
             // PREVIOUS TIER
-            // GET DIRECTLY FROM PLAYERS TABLE
+            // GET FROM RESULTS TABLE
             // =====================================================
+
+            const {
+                data: previousResult,
+                error: previousError
+            } = await supabase
+                .from('results')
+                .select('new_tier')
+                .eq('discord_id', user.id)
+                .eq('gamemode', gamemode)
+                .order('created_at', {
+                    ascending: false
+                })
+                .limit(1)
+                .maybeSingle();
+
+            if (previousError) {
+
+                console.error(
+                    '❌ PREVIOUS TIER LOOKUP ERROR:',
+                    previousError
+                );
+            }
 
             const previousTier =
-                player[tierColumn] || 'Unranked';
-
-            console.log(
-                `📊 Previous ${gamemode} tier for ${player.ign}: ${previousTier}`
-            );
+                previousResult?.new_tier || 'Unranked';
 
             // =====================================================
-            // TIER ROLES
+            // TIER ROLE CONFIG
             // =====================================================
 
             const gamemodeTiers =
                 config.tiers?.[gamemode];
 
             if (!gamemodeTiers) {
+
                 return interaction.editReply({
                     content:
                         `❌ Tier roles for **${gamemode}** are not configured.`
@@ -154,6 +160,7 @@ module.exports = {
                 gamemodeTiers[tier];
 
             if (!newRoleId) {
+
                 return interaction.editReply({
                     content:
                         `❌ Role for **${tier} ${gamemode}** was not found.`
@@ -161,7 +168,7 @@ module.exports = {
             }
 
             // =====================================================
-            // MEMBER
+            // FETCH MEMBER
             // =====================================================
 
             const member =
@@ -182,9 +189,10 @@ module.exports = {
                 );
 
             if (rolesUserHas.length > 0) {
+
                 await member.roles.remove(
                     rolesUserHas,
-                    'Updating KairoTiers rank'
+                    'Updating KairoTiers tier'
                 );
             }
 
@@ -195,45 +203,6 @@ module.exports = {
             await member.roles.add(
                 newRoleId,
                 'KairoTiers test result'
-            );
-
-            // =====================================================
-            // UPDATE PLAYERS TABLE
-            // =====================================================
-
-            console.log(
-                `🔄 Updating players.${tierColumn} for ${player.ign} → ${tier}`
-            );
-
-            const {
-                data: updatedPlayer,
-                error: tierUpdateError
-            } = await supabase
-                .from('players')
-                .update({
-                    [tierColumn]: tier,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('discord_id', user.id)
-                .select()
-                .single();
-
-            if (tierUpdateError) {
-
-                console.error(
-                    '❌ PLAYER TIER UPDATE ERROR:',
-                    tierUpdateError
-                );
-
-                return interaction.editReply({
-                    content:
-                        `⚠️ Discord role was updated, but **${gamemode} tier could not be saved to the database**.\n\n` +
-                        `Database error: \`${tierUpdateError.message}\``
-                });
-            }
-
-            console.log(
-                `✅ Database updated: ${player.ign} → ${gamemode} → ${tier}`
             );
 
             // =====================================================
@@ -256,18 +225,18 @@ module.exports = {
             if (insertError) {
 
                 console.error(
-                    '❌ Result insert error:',
+                    '❌ RESULT INSERT ERROR:',
                     insertError
                 );
 
                 return interaction.editReply({
                     content:
-                        '⚠️ Player tier was updated, but the result history could not be saved.'
+                        '⚠️ Discord role was updated, but the result could not be saved.'
                 });
             }
 
             console.log(
-                `✅ Result history saved for ${player.ign}`
+                `✅ Result saved: ${player.ign} | ${gamemode} | ${previousTier} → ${tier}`
             );
 
             // =====================================================
@@ -307,7 +276,7 @@ module.exports = {
 
                 return interaction.editReply({
                     content:
-                        '⚠️ Result and tier were saved, but the 7-day cooldown could not be saved.'
+                        '⚠️ Result was saved, but the 7-day cooldown could not be saved.'
                 });
             }
 
@@ -374,20 +343,10 @@ module.exports = {
             } catch (error) {
 
                 console.error(
-                    '❌ Website Sync Error:',
+                    '❌ WEBSITE SYNC ERROR:',
                     error
                 );
             }
-
-            console.log(
-                '🌐 WEBSITE API:',
-                process.env.WEBSITE_API_URL
-            );
-
-            console.log(
-                '🔐 WEBSITE SECRET LOADED:',
-                !!process.env.WEBSITE_BOT_SECRET
-            );
 
             // =====================================================
             // RESULT CHANNEL
@@ -413,17 +372,20 @@ module.exports = {
                     title:
                         `${player.ign}'s Tier Update 🏆`,
 
-                    color: 0x8B0000,
+                    color:
+                        0x8B0000,
 
                     fields: [
 
                         {
-                            name: 'Tester',
+                            name:
+                                'Tester',
 
                             value:
                                 `${testerEmoji} <@${interaction.user.id}>`,
 
-                            inline: false
+                            inline:
+                                false
                         },
 
                         {
@@ -433,7 +395,8 @@ module.exports = {
                             value:
                                 `\`${player.ign}\``,
 
-                            inline: false
+                            inline:
+                                false
                         },
 
                         {
@@ -443,7 +406,8 @@ module.exports = {
                             value:
                                 `${gameEmoji} **${gamemode}**`,
 
-                            inline: false
+                            inline:
+                                false
                         },
 
                         {
@@ -453,7 +417,8 @@ module.exports = {
                             value:
                                 `\`${previousTier}\``,
 
-                            inline: false
+                            inline:
+                                false
                         },
 
                         {
@@ -463,7 +428,8 @@ module.exports = {
                             value:
                                 `\`${tier}\``,
 
-                            inline: false
+                            inline:
+                                false
                         }
                     ],
 
@@ -477,8 +443,11 @@ module.exports = {
                 };
 
                 await resultChannel.send({
-                    content: `${user}`,
-                    embeds: [resultEmbed]
+                    content:
+                        `${user}`,
+
+                    embeds:
+                        [resultEmbed]
                 });
             }
 
