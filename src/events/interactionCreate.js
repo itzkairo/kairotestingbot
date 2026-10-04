@@ -272,36 +272,77 @@ module.exports = {
                         });
                     }
 
-                    // =============================================
-                    // CHECK LT3 OR HIGHER
-                    // =============================================
+// =============================================
+// CHECK LT3 OR HIGHER
+// GET LATEST TIER FROM RESULTS TABLE
+// =============================================
 
-                    const tierColumn =
-                        `${highGamemode.toLowerCase()}_tier`;
+const {
+    data: latestResult,
+    error: tierError
+} = await supabase
+    .from('results')
+    .select('new_tier, created_at')
+    .eq(
+        'discord_id',
+        interaction.user.id
+    )
+    .eq(
+        'gamemode',
+        highGamemode
+    )
+    .order(
+        'created_at',
+        {
+            ascending: false
+        }
+    )
+    .limit(1)
+    .maybeSingle();
 
-                    const currentTier =
-                        player[tierColumn] ||
-                        'Unranked';
+if (tierError) {
 
-                    const eligibleTiers = [
-                        'LT3',
-                        'HT3'
-                    ];
+    console.error(
+        'HIGH TEST TIER CHECK ERROR:',
+        tierError
+    );
 
-                    if (
-                        !eligibleTiers.includes(
-                            currentTier
-                        )
-                    ) {
+    return await interaction.reply({
+        content:
+            '❌ Database error while checking your current tier.',
+        flags:
+            MessageFlags.Ephemeral
+    });
+}
 
-                        return await interaction.reply({
-                            content:
-                                `❌ You need **LT3 or higher** in **${highGamemode}** to apply for a High Test.\n\n` +
-                                `Your current **${highGamemode}** tier is **${currentTier}**.`,
-                            flags:
-                                MessageFlags.Ephemeral
-                        });
-                    }
+const currentTier =
+    latestResult?.new_tier ||
+    'Unranked';
+
+// LT3 or higher
+const eligibleTiers = [
+    'LT3',
+    'HT3'
+];
+
+if (
+    !eligibleTiers.includes(
+        currentTier
+    )
+) {
+
+    return await interaction.reply({
+        content:
+            `❌ You need **LT3 or higher** in **${highGamemode}** to apply for a High Test.\n\n` +
+            `Your current **${highGamemode}** tier is **${currentTier}**.`,
+        flags:
+            MessageFlags.Ephemeral
+    });
+}
+
+console.log(
+    `✅ High Test eligibility: ${interaction.user.tag} | ${highGamemode} | ${currentTier}`
+);
 
                     // =============================================
                     // OPEN QUESTIONS MODAL
