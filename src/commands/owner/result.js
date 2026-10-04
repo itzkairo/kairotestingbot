@@ -69,6 +69,30 @@ module.exports = {
             const gamemode = interaction.options.getString('gamemode');
 
             // =====================================================
+            // PLAYER TIER COLUMN
+            // =====================================================
+
+            const tierColumnMap = {
+                Sword: 'sword_tier',
+                Axe: 'axe_tier',
+                Mace: 'mace_tier',
+                DiaPot: 'diapot_tier',
+                NethPot: 'nethpot_tier',
+                SMP: 'smp_tier',
+                Crystal: 'crystal_tier',
+                UHC: 'uhc_tier'
+            };
+
+            const tierColumn = tierColumnMap[gamemode];
+
+            if (!tierColumn) {
+                return interaction.editReply({
+                    content:
+                        `❌ No database tier column is configured for **${gamemode}**.`
+                });
+            }
+
+            // =====================================================
             // PLAYER PROFILE
             // =====================================================
 
@@ -83,7 +107,7 @@ module.exports = {
 
             if (playerError) {
                 console.error(
-                    'Player lookup error:',
+                    '❌ Player lookup error:',
                     playerError
                 );
 
@@ -102,31 +126,15 @@ module.exports = {
 
             // =====================================================
             // PREVIOUS TIER
+            // GET DIRECTLY FROM PLAYERS TABLE
             // =====================================================
 
-            const {
-                data: previousResult,
-                error: previousError
-            } = await supabase
-                .from('results')
-                .select('new_tier')
-                .eq('discord_id', user.id)
-                .eq('gamemode', gamemode)
-                .order('created_at', {
-                    ascending: false
-                })
-                .limit(1)
-                .maybeSingle();
-
-            if (previousError) {
-                console.error(
-                    'Previous tier lookup error:',
-                    previousError
-                );
-            }
-
             const previousTier =
-                previousResult?.new_tier || 'Unranked';
+                player[tierColumn] || 'Unranked';
+
+            console.log(
+                `📊 Previous ${gamemode} tier for ${player.ign}: ${previousTier}`
+            );
 
             // =====================================================
             // TIER ROLES
@@ -175,7 +183,8 @@ module.exports = {
 
             if (rolesUserHas.length > 0) {
                 await member.roles.remove(
-                    rolesUserHas
+                    rolesUserHas,
+                    'Updating KairoTiers rank'
                 );
             }
 
@@ -184,7 +193,47 @@ module.exports = {
             // =====================================================
 
             await member.roles.add(
-                newRoleId
+                newRoleId,
+                'KairoTiers test result'
+            );
+
+            // =====================================================
+            // UPDATE PLAYERS TABLE
+            // =====================================================
+
+            console.log(
+                `🔄 Updating players.${tierColumn} for ${player.ign} → ${tier}`
+            );
+
+            const {
+                data: updatedPlayer,
+                error: tierUpdateError
+            } = await supabase
+                .from('players')
+                .update({
+                    [tierColumn]: tier,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('discord_id', user.id)
+                .select()
+                .single();
+
+            if (tierUpdateError) {
+
+                console.error(
+                    '❌ PLAYER TIER UPDATE ERROR:',
+                    tierUpdateError
+                );
+
+                return interaction.editReply({
+                    content:
+                        `⚠️ Discord role was updated, but **${gamemode} tier could not be saved to the database**.\n\n` +
+                        `Database error: \`${tierUpdateError.message}\``
+                });
+            }
+
+            console.log(
+                `✅ Database updated: ${player.ign} → ${gamemode} → ${tier}`
             );
 
             // =====================================================
@@ -205,16 +254,21 @@ module.exports = {
                 });
 
             if (insertError) {
+
                 console.error(
-                    'Result insert error:',
+                    '❌ Result insert error:',
                     insertError
                 );
 
                 return interaction.editReply({
                     content:
-                        '⚠️ Discord role was updated, but the result could not be saved.'
+                        '⚠️ Player tier was updated, but the result history could not be saved.'
                 });
             }
+
+            console.log(
+                `✅ Result history saved for ${player.ign}`
+            );
 
             // =====================================================
             // 7 DAY COOLDOWN
@@ -247,13 +301,13 @@ module.exports = {
             if (cooldownError) {
 
                 console.error(
-                    'COOLDOWN SAVE ERROR:',
+                    '❌ COOLDOWN SAVE ERROR:',
                     cooldownError
                 );
 
                 return interaction.editReply({
                     content:
-                        '⚠️ Result was saved, but the 7-day cooldown could not be saved.'
+                        '⚠️ Result and tier were saved, but the 7-day cooldown could not be saved.'
                 });
             }
 
@@ -261,78 +315,79 @@ module.exports = {
                 `✅ ${user.tag} received a 7-day ${gamemode} cooldown.`
             );
 
-    // =====================================================
-// WEBSITE SYNC
-// =====================================================
+            // =====================================================
+            // WEBSITE SYNC
+            // =====================================================
 
-try {
+            try {
 
-    const websiteResponse =
-        await fetch(
-            process.env.WEBSITE_API_URL,
-            {
-                method: 'POST',
+                const websiteResponse =
+                    await fetch(
+                        process.env.WEBSITE_API_URL,
+                        {
+                            method: 'POST',
 
-                headers: {
-                    'Content-Type':
-                        'application/json',
+                            headers: {
+                                'Content-Type':
+                                    'application/json',
 
-                    'X-Bot-Secret':
-                        process.env.WEBSITE_BOT_SECRET
-                },
+                                'X-Bot-Secret':
+                                    process.env.WEBSITE_BOT_SECRET
+                            },
 
-                body: JSON.stringify({
-                    discordId: user.id,
-                    ign: player.ign,
-                    tier: tier,
-                    gamemode: gamemode.toLowerCase()
-                })
+                            body: JSON.stringify({
+                                discordId: user.id,
+                                ign: player.ign,
+                                tier: tier,
+                                gamemode:
+                                    gamemode.toLowerCase()
+                            })
+                        }
+                    );
+
+                const websiteText =
+                    await websiteResponse.text();
+
+                console.log(
+                    '🌐 Website API Status:',
+                    websiteResponse.status
+                );
+
+                console.log(
+                    '🌐 Website API Response:',
+                    websiteText
+                );
+
+                if (!websiteResponse.ok) {
+
+                    console.error(
+                        '❌ Website sync failed!'
+                    );
+
+                } else {
+
+                    console.log(
+                        '✅ Website tier synced successfully!'
+                    );
+                }
+
+            } catch (error) {
+
+                console.error(
+                    '❌ Website Sync Error:',
+                    error
+                );
             }
-        );
 
-    const websiteText =
-        await websiteResponse.text();
+            console.log(
+                '🌐 WEBSITE API:',
+                process.env.WEBSITE_API_URL
+            );
 
-    console.log(
-        '🌐 Website API Status:',
-        websiteResponse.status
-    );
-
-    console.log(
-        '🌐 Website API Response:',
-        websiteText
-    );
-
-    if (!websiteResponse.ok) {
-
-        console.error(
-            '❌ Website sync failed!'
-        );
-
-    } else {
-
-        console.log(
-            '✅ Website tier synced successfully!'
-        );
-    }
-
-} catch (error) {
-
-    console.error(
-        '❌ Website Sync Error:',
-        error
-    );
-}
-
-console.log(
-    'WEBSITE API:',
-    process.env.WEBSITE_API_URL
-);
-
-console.log(
-    'WEBSITE SECRET LOADED:',
-    !!process.env.WEBSITE_BOT_SECRET
-);
+            console.log(
+                '🔐 WEBSITE SECRET LOADED:',
+                !!process.env.WEBSITE_BOT_SECRET
+            );
 
             // =====================================================
             // RESULT CHANNEL
@@ -448,7 +503,7 @@ console.log(
         } catch (error) {
 
             console.error(
-                'RP COMMAND ERROR:',
+                '❌ RP COMMAND ERROR:',
                 error
             );
 
