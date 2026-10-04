@@ -261,70 +261,70 @@ module.exports = {
                 `✅ ${user.tag} received a 7-day ${gamemode} cooldown.`
             );
 
-            // =====================================================
-            // WEBSITE SYNC
-            // =====================================================
+    // =====================================================
+// WEBSITE SYNC
+// =====================================================
 
-            try {
+try {
 
-                const websiteResponse =
-                    await fetch(
-                        process.env.WEBSITE_API_URL,
-                        {
-                            method: 'POST',
+    const websiteResponse =
+        await fetch(
+            process.env.WEBSITE_API_URL,
+            {
+                method: 'POST',
 
-                            headers: {
-                                'Content-Type':
-                                    'application/json',
+                headers: {
+                    'Content-Type':
+                        'application/json',
 
-                                'X-Bot-Secret':
-                                    process.env.WEBSITE_BOT_SECRET
-                            },
+                    'X-Bot-Secret':
+                        process.env.WEBSITE_BOT_SECRET
+                },
 
-                            body: JSON.stringify({
-                                ign: player.ign,
-                                tier: tier,
-                                gamemode:
-                                    gamemode.toLowerCase()
-                            })
-                        }
-                    );
-
-                const websiteText =
-                    await websiteResponse.text();
-
-                console.log(
-                    '🌐 Website API Status:',
-                    websiteResponse.status
-                );
-
-                console.log(
-                    '🌐 Website API Response:',
-                    websiteText
-                );
-
-                if (!websiteResponse.ok) {
-
-                    console.error(
-                        '❌ Website sync failed!'
-                    );
-
-                } else {
-
-                    console.log(
-                        '✅ Website tier synced successfully!'
-                    );
-                }
-
-            } catch (error) {
-
-                console.error(
-                    '❌ Website Sync Error:',
-                    error
-                );
+                body: JSON.stringify({
+                    discordId: user.id,
+                    ign: player.ign,
+                    tier: tier,
+                    gamemode: gamemode.toLowerCase()
+                })
             }
+        );
 
-            console.log(
+    const websiteText =
+        await websiteResponse.text();
+
+    console.log(
+        '🌐 Website API Status:',
+        websiteResponse.status
+    );
+
+    console.log(
+        '🌐 Website API Response:',
+        websiteText
+    );
+
+    if (!websiteResponse.ok) {
+
+        console.error(
+            '❌ Website sync failed!'
+        );
+
+    } else {
+
+        console.log(
+            '✅ Website tier synced successfully!'
+        );
+    }
+
+} catch (error) {
+
+    console.error(
+        '❌ Website Sync Error:',
+        error
+    );
+}
+
+console.log(
     'WEBSITE API:',
     process.env.WEBSITE_API_URL
 );
