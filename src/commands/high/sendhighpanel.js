@@ -39,8 +39,9 @@ module.exports = {
             emojis.gamemodes?.DiaPot ||
             '<:diapot:1534871592730099743>';
 
+        // EXACT CUSTOM TROPHY EMOJI
         const trophyEmoji =
-            '<:trophy:1471678791821688842>';
+            '<:1471678791821688842:1546946782565769267>';
 
         // ==========================================
         // EMBED
@@ -124,6 +125,7 @@ module.exports = {
                     emojis.gamemodes?.[gamemode];
 
                 if (emoji) {
+
                     const match =
                         emoji.match(
                             /<a?:\w+:(\d+)>/
