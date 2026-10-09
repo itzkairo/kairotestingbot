@@ -465,25 +465,41 @@ console.log(
                         .from('high_test_staff_roles')
                         .select('role_id');
 
-                    if (staffRolesError) {
-                        console.error('HIGH TEST STAFF CHECK ERROR:', staffRolesError);
-                        return await interaction.reply({
-                            content: '❌ Could not verify High Test staff permissions.',
-                            flags: MessageFlags.Ephemeral
-                        });
-                    }
+ 
+if (staffRolesError) {
+    console.error(
+        'HIGH TEST STAFF CHECK ERROR:',
+        JSON.stringify(staffRolesError, null, 2)
+    );
 
-                    const staffRoleIds = (staffRoles || []).map(row => row.role_id);
-                    const isHighTestStaff = Boolean(
-                        interaction.member?.roles?.cache?.some(role => staffRoleIds.includes(role.id))
-                    );
+    return await interaction.reply({
+        content: '❌ Could not verify High Test staff permissions. Check bot logs.',
+        flags: MessageFlags.Ephemeral
+    });
+}
 
-                    if (!isOwner && !isHighTestStaff) {
-                        return await interaction.reply({
-                            content: '❌ Only High Test staff can close or skip this ticket.',
-                            flags: MessageFlags.Ephemeral
-                        });
-                    }
+const staffRoleIds = (staffRoles || [])
+    .map(row => String(row.role_id));
+
+// Owner bypasses the staff-role list.
+// All other users must have a role explicitly added via /addrole.
+
+const HIGH_TEST_STAFF_ROLE_ID = '1542798698617249842';
+
+const memberRoleIds = interaction.member?.roles?.cache
+    ? [...interaction.member.roles.cache.keys()]
+    : [];
+
+const isHighTestStaff = memberRoleIds.includes(
+    HIGH_TEST_STAFF_ROLE_ID
+);
+
+if (!isOwner && !isHighTestStaff) {
+    return await interaction.reply({
+        content: '❌ Only High Test staff can close or skip this ticket.',
+        flags: MessageFlags.Ephemeral
+    });
+}
 
                     // =============================================
                     // GET TICKET OWNER
