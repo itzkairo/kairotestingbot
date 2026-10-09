@@ -273,7 +273,28 @@ module.exports = {
                     }
 
 // =============================================
-// CHECK LT3 OR HIGHER
+// CHECK HIGH TEST ALLOWLIST
+// Owners can manually allow players with /add.
+// =============================================
+
+const { data: allowlistedPlayer, error: allowlistError } = await supabase
+    .from('high_test_players')
+    .select('discord_id')
+    .eq('discord_id', interaction.user.id)
+    .maybeSingle();
+
+if (allowlistError) {
+    console.error('HIGH TEST ALLOWLIST CHECK ERROR:', allowlistError);
+    return await interaction.reply({
+        content: '❌ Database error while checking High Test access.',
+        flags: MessageFlags.Ephemeral
+    });
+}
+
+const isAllowlisted = Boolean(allowlistedPlayer);
+
+// =============================================
+// CHECK LT3 OR HIGHER UNLESS ALLOWLISTED
 // GET LATEST TIER FROM RESULTS TABLE
 // =============================================
 
@@ -326,9 +347,8 @@ const eligibleTiers = [
 ];
 
 if (
-    !eligibleTiers.includes(
-        currentTier
-    )
+    !isAllowlisted &&
+    !eligibleTiers.includes(currentTier)
 ) {
 
     return await interaction.reply({
@@ -431,54 +451,37 @@ console.log(
                 }
 
                 // =================================================
-                // HIGH TEST SKIP
+                // HIGH TEST CLOSE / SKIP
                 // =================================================
 
                 if (
-                    customId ===
-                    'high_ticket_skip'
+                    customId === 'high_ticket_close' ||
+                    customId === 'high_ticket_skip'
                 ) {
+                    const isSkip = customId === 'high_ticket_skip';
+                    const isOwner = interaction.user.id === config.roles.ownerId;
 
-                    return await interaction.reply({
-                        content:
-                            '⏭️ Skipped.',
-                        flags:
-                            MessageFlags.Ephemeral
-                    });
-                }
+                    const { data: staffRoles, error: staffRolesError } = await supabase
+                        .from('high_test_staff_roles')
+                        .select('role_id');
 
-                // =================================================
-                // HIGH TEST CLOSE
-                // =================================================
-
-                if (
-                    customId ===
-                    'high_ticket_close'
-                ) {
-
-                    // =============================================
-                    // ONLY TESTER / OWNER CAN CLOSE
-                    // =============================================
-
-                    const isOwner =
-                        interaction.user.id ===
-                        config.roles.ownerId;
-
-                    const isTester =
-                        perms.isTester(
-                            interaction.member
-                        );
-
-                    if (
-                        !isOwner &&
-                        !isTester
-                    ) {
-
+                    if (staffRolesError) {
+                        console.error('HIGH TEST STAFF CHECK ERROR:', staffRolesError);
                         return await interaction.reply({
-                            content:
-                                '❌ Only testers can close High Test tickets.',
-                            flags:
-                                MessageFlags.Ephemeral
+                            content: '❌ Could not verify High Test staff permissions.',
+                            flags: MessageFlags.Ephemeral
+                        });
+                    }
+
+                    const staffRoleIds = (staffRoles || []).map(row => row.role_id);
+                    const isHighTestStaff = Boolean(
+                        interaction.member?.roles?.cache?.some(role => staffRoleIds.includes(role.id))
+                    );
+
+                    if (!isOwner && !isHighTestStaff) {
+                        return await interaction.reply({
+                            content: '❌ Only High Test staff can close or skip this ticket.',
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
@@ -607,7 +610,7 @@ console.log(
                         `Player ID: ${ticketUserId}\n`;
 
                     transcript +=
-                        `Closed By: ${interaction.user.tag} (${interaction.user.id})\n`;
+                        `${isSkip ? 'Skipped By' : 'Closed By'}: ${interaction.user.tag} (${interaction.user.id})\n`;
 
                     transcript +=
                         `Closed At: ${new Date().toISOString()}\n\n`;
@@ -742,7 +745,7 @@ console.log(
 
                                 {
                                     name:
-                                        'Closed By',
+                                        isSkip ? 'Skipped By' : 'Closed By',
                                     value:
                                         `<@${interaction.user.id}>`,
                                     inline: true
@@ -768,9 +771,10 @@ console.log(
                     });
 
                     // =============================================
-                    // 15 DAY COOLDOWN
+                    // 15 DAY COOLDOWN (CLOSE ONLY; SKIP HAS NO COOLDOWN)
                     // =============================================
 
+                    if (!isSkip) {
                     const cooldownUntil =
                         new Date(
                             Date.now() +
@@ -817,13 +821,16 @@ console.log(
                         });
                     }
 
+                    }
+
                     // =============================================
                     // SUCCESS MESSAGE
                     // =============================================
 
                     await interaction.editReply({
-                        content:
-                            '✅ Transcript saved successfully.\n🔒 15-day High Test cooldown applied.\n🗑️ Closing ticket...'
+                        content: isSkip
+                            ? '⏭️ Transcript saved successfully. Closing ticket without a cooldown.'
+                            : '✅ Transcript saved successfully.\n🔒 15-day High Test cooldown applied.\n🗑️ Closing ticket...'
                     });
 
                     // =============================================
@@ -836,7 +843,7 @@ console.log(
                             try {
 
                                 await interaction.channel.delete(
-                                    'High Test ticket closed'
+                                    isSkip ? 'High Test ticket skipped' : 'High Test ticket closed'
                                 );
 
                             } catch (error) {
@@ -2023,6 +2030,64 @@ console.log(
                             ) ||
                         'player';
 
+                    const { data: staffRoles, error: staffRolesError } = await supabase
+                        .from('high_test_staff_roles')
+                        .select('role_id');
+
+                    if (staffRolesError) {
+                        console.error('HIGH TEST STAFF ROLES ERROR:', staffRolesError);
+                        return await interaction.reply({
+                            content: '❌ Could not load High Test staff roles.',
+                            flags: MessageFlags.Ephemeral
+                        });
+                    }
+
+                    const staffRoleIds = (staffRoles || []).map(row => row.role_id);
+
+                    const permissionOverwrites = [
+                        {
+                            id: interaction.guild.roles.everyone.id,
+                            deny: [PermissionFlagsBits.ViewChannel]
+                        },
+                        {
+                            id: interaction.user.id,
+                            allow: [
+                                PermissionFlagsBits.ViewChannel,
+                                PermissionFlagsBits.SendMessages,
+                                PermissionFlagsBits.ReadMessageHistory,
+                                PermissionFlagsBits.AttachFiles
+                            ]
+                        },
+                        {
+                            id: config.roles.ownerId,
+                            allow: [
+                                PermissionFlagsBits.ViewChannel,
+                                PermissionFlagsBits.SendMessages,
+                                PermissionFlagsBits.ReadMessageHistory,
+                                PermissionFlagsBits.AttachFiles
+                            ]
+                        },
+                        {
+                            id: interaction.client.user.id,
+                            allow: [
+                                PermissionFlagsBits.ViewChannel,
+                                PermissionFlagsBits.SendMessages,
+                                PermissionFlagsBits.ReadMessageHistory,
+                                PermissionFlagsBits.ManageChannels,
+                                PermissionFlagsBits.AttachFiles
+                            ]
+                        },
+                        ...staffRoleIds.map(roleId => ({
+                            id: roleId,
+                            allow: [
+                                PermissionFlagsBits.ViewChannel,
+                                PermissionFlagsBits.SendMessages,
+                                PermissionFlagsBits.ReadMessageHistory,
+                                PermissionFlagsBits.AttachFiles
+                            ]
+                        }))
+                    ];
+
                     const ticketChannel =
                         await interaction.guild.channels.create({
                             name:
@@ -2037,44 +2102,8 @@ console.log(
                             topic:
                                 `HT_USER:${interaction.user.id} | GAMEMODE:${highGamemode}`,
 
-                            permissionOverwrites: [
+                            permissionOverwrites
 
-                                {
-                                    id:
-                                        interaction.guild
-                                            .roles
-                                            .everyone
-                                            .id,
-
-                                    deny: [
-                                        PermissionFlagsBits.ViewChannel
-                                    ]
-                                },
-
-                                {
-                                    id:
-                                        interaction.user.id,
-
-                                    allow: [
-                                        PermissionFlagsBits.ViewChannel,
-                                        PermissionFlagsBits.SendMessages,
-                                        PermissionFlagsBits.ReadMessageHistory,
-                                        PermissionFlagsBits.AttachFiles
-                                    ]
-                                },
-
-                                {
-                                    id:
-                                        config.roles.tester,
-
-                                    allow: [
-                                        PermissionFlagsBits.ViewChannel,
-                                        PermissionFlagsBits.SendMessages,
-                                        PermissionFlagsBits.ReadMessageHistory,
-                                        PermissionFlagsBits.AttachFiles
-                                    ]
-                                }
-                            ]
                         });
 
                     // =============================================
@@ -2181,8 +2210,10 @@ console.log(
                             );
 
                     await ticketChannel.send({
-                        content:
-                            `<@${interaction.user.id}> <@&${config.roles.tester}>`,
+                        content: [
+                            `<@${interaction.user.id}>`,
+                            ...staffRoleIds.map(roleId => `<@&${roleId}>`)
+                        ].join(' '),
 
                         embeds: [
                             ticketEmbed
