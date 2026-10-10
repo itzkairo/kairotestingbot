@@ -284,7 +284,7 @@ const { data: allowlistedPlayer, error: allowlistError } = await supabase
     .maybeSingle();
 
 if (allowlistError) {
-    console.error('HIGH TEST ALLOWLIST CHECK ERROR:', allowlistError);
+    console.error('HIGH TEST ALLOWLIST CHECK ERROR:', JSON.stringify(allowlistError, null, 2));
     return await interaction.reply({
         content: '❌ Database error while checking High Test access.',
         flags: MessageFlags.Ephemeral
