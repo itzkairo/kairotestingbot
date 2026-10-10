@@ -26,7 +26,7 @@ module.exports = {
         ) {
             return interaction.reply({
                 content:
-                    '❌ Only the bot owner can use this command.',
+                    '<:Cross:1558553359642918952> Only the bot owner can use this command.',
                 ephemeral: true
             });
         }
@@ -155,7 +155,7 @@ module.exports = {
 
         return interaction.reply({
             content:
-                '✅ High Tests panel sent.',
+                '<:tick:1558554326887047228> High Tests panel sent.',
             ephemeral: true
         });
     }

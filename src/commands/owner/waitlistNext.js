@@ -164,7 +164,7 @@ module.exports = {
 
             return interaction.editReply({
                 content:
-                    "❌ Failed to create the testing ticket."
+                    "<:Cross:1558553359642918952> Failed to create the testing ticket."
             });
         }
 
@@ -202,7 +202,7 @@ module.exports = {
 
             return interaction.editReply({
                 content:
-                    "❌ Failed to create the testing session."
+                    "<:Cross:1558553359642918952> Failed to create the testing session."
             });
         }
 
@@ -226,7 +226,7 @@ module.exports = {
 
             return interaction.editReply({
                 content:
-                    "❌ Failed to remove the player from the queue."
+                    "<:Cross:1558553359642918952> Failed to remove the player from the queue."
             });
         }
 
@@ -533,7 +533,7 @@ module.exports = {
 
         await interaction.editReply({
             content:
-                `✅ Ticket created: ${ticketChannel}`
+                `<:tick:1558554326887047228> Ticket created: ${ticketChannel}`
         });
     }
 };

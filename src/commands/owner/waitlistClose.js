@@ -19,7 +19,7 @@ module.exports = {
         if (!perms.isTester(interaction.member)) {
 
             return interaction.reply({
-                content: '❌ Only testers can use this command.',
+                content: '<:Cross:1558553359642918952> Only testers can use this command.',
                 flags: 64
             });
         }
@@ -32,7 +32,7 @@ module.exports = {
 
             return interaction.reply({
                 content:
-                    '❌ This channel is not a registered testing queue.',
+                    '<:Cross:1558553359642918952> This channel is not a registered testing queue.',
                 flags: 64
             });
         }
@@ -66,7 +66,7 @@ module.exports = {
 
                 return interaction.editReply({
                     content:
-                        '❌ Failed to close the queue.'
+                        '<:Cross:1558553359642918952> Failed to close the queue.'
                 });
             }
 
@@ -135,14 +135,14 @@ module.exports = {
 
                 return interaction.editReply({
                     content:
-                        '❌ Something went wrong while closing the queue.'
+                        '<:Cross:1558553359642918952> Something went wrong while closing the queue.'
                 }).catch(() => {});
 
             }
 
             return interaction.reply({
                 content:
-                    '❌ Something went wrong while closing the queue.',
+                    '<:Cross:1558553359642918952> Something went wrong while closing the queue.',
                 flags: 64
             }).catch(() => {});
         }

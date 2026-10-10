@@ -129,7 +129,7 @@ module.exports = {
         });
 
         await interaction.reply({
-            content: '✅ Waitlist panel sent.',
+            content: '<:tick:1558554326887047228> Waitlist panel sent.',
             ephemeral: true
         });
     }

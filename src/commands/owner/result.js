@@ -57,7 +57,7 @@ module.exports = {
 
         if (!perms.isTester(interaction.member)) {
             return interaction.reply({
-                content: '❌ Unauthorized.',
+                content: '<:Cross:1558553359642918952> Unauthorized.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -93,13 +93,13 @@ module.exports = {
             if (playerError) {
 
                 console.error(
-                    '❌ PLAYER LOOKUP ERROR:',
+                    '<:Cross:1558553359642918952> PLAYER LOOKUP ERROR:',
                     playerError
                 );
 
                 return interaction.editReply({
                     content:
-                        '❌ Database error while finding the player.'
+                        '<:Cross:1558553359642918952> Database error while finding the player.'
                 });
             }
 
@@ -107,7 +107,7 @@ module.exports = {
 
                 return interaction.editReply({
                     content:
-                        '❌ Player profile not found.'
+                        '<:Cross:1558553359642918952> Player profile not found.'
                 });
             }
 
@@ -133,7 +133,7 @@ module.exports = {
             if (previousError) {
 
                 console.error(
-                    '❌ PREVIOUS TIER LOOKUP ERROR:',
+                    '<:Cross:1558553359642918952> PREVIOUS TIER LOOKUP ERROR:',
                     previousError
                 );
             }
@@ -152,7 +152,7 @@ module.exports = {
 
                 return interaction.editReply({
                     content:
-                        `❌ Tier roles for **${gamemode}** are not configured.`
+                        `<:Cross:1558553359642918952> Tier roles for **${gamemode}** are not configured.`
                 });
             }
 
@@ -163,7 +163,7 @@ module.exports = {
 
                 return interaction.editReply({
                     content:
-                        `❌ Role for **${tier} ${gamemode}** was not found.`
+                        `<:Cross:1558553359642918952> Role for **${tier} ${gamemode}** was not found.`
                 });
             }
 
@@ -225,7 +225,7 @@ module.exports = {
             if (insertError) {
 
                 console.error(
-                    '❌ RESULT INSERT ERROR:',
+                    '<:Cross:1558553359642918952> RESULT INSERT ERROR:',
                     insertError
                 );
 
@@ -236,7 +236,7 @@ module.exports = {
             }
 
             console.log(
-                `✅ Result saved: ${player.ign} | ${gamemode} | ${previousTier} → ${tier}`
+                `<:tick:1558554326887047228> Result saved: ${player.ign} | ${gamemode} | ${previousTier} → ${tier}`
             );
 
             // =====================================================
@@ -270,7 +270,7 @@ module.exports = {
             if (cooldownError) {
 
                 console.error(
-                    '❌ COOLDOWN SAVE ERROR:',
+                    '<:Cross:1558553359642918952> COOLDOWN SAVE ERROR:',
                     cooldownError
                 );
 
@@ -281,7 +281,7 @@ module.exports = {
             }
 
             console.log(
-                `✅ ${user.tag} received a 7-day ${gamemode} cooldown.`
+                `<:tick:1558554326887047228> ${user.tag} received a 7-day ${gamemode} cooldown.`
             );
 
             // =====================================================
@@ -330,20 +330,20 @@ module.exports = {
                 if (!websiteResponse.ok) {
 
                     console.error(
-                        '❌ Website sync failed!'
+                        '<:Cross:1558553359642918952> Website sync failed!'
                     );
 
                 } else {
 
                     console.log(
-                        '✅ Website tier synced successfully!'
+                        '<:tick:1558554326887047228> Website tier synced successfully!'
                     );
                 }
 
             } catch (error) {
 
                 console.error(
-                    '❌ WEBSITE SYNC ERROR:',
+                    '<:Cross:1558553359642918952> WEBSITE SYNC ERROR:',
                     error
                 );
             }
@@ -463,7 +463,7 @@ module.exports = {
 
             await interaction.editReply({
                 content:
-                    `✅ Result submitted for **${player.ign}** in **${gamemode}**.\n\n` +
+                    `<:tick:1558554326887047228> Result submitted for **${player.ign}** in **${gamemode}**.\n\n` +
                     `Previous Tier: **${previousTier}**\n` +
                     `New Tier: **${tier}**\n\n` +
                     `⏳ **${gamemode} cooldown:** <t:${unixCooldown}:R>`
@@ -472,7 +472,7 @@ module.exports = {
         } catch (error) {
 
             console.error(
-                '❌ RP COMMAND ERROR:',
+                '<:Cross:1558553359642918952> RP COMMAND ERROR:',
                 error
             );
 
@@ -483,14 +483,14 @@ module.exports = {
 
                 await interaction.editReply({
                     content:
-                        '❌ An error occurred while submitting the result. Check the console.'
+                        '<:Cross:1558553359642918952> An error occurred while submitting the result. Check the console.'
                 }).catch(() => {});
 
             } else {
 
                 await interaction.reply({
                     content:
-                        '❌ An error occurred while submitting the result.',
+                        '<:Cross:1558553359642918952> An error occurred while submitting the result.',
                     flags:
                         MessageFlags.Ephemeral
                 }).catch(() => {});

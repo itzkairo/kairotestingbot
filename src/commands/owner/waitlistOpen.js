@@ -28,7 +28,7 @@ module.exports = {
 
             if (!perms.isTester(interaction.member)) {
                 return interaction.editReply({
-                    content: '❌ Only testers can use this command.'
+                    content: '<:Cross:1558553359642918952> Only testers can use this command.'
                 });
             }
 
@@ -42,7 +42,7 @@ module.exports = {
             if (!gamemode) {
                 return interaction.editReply({
                     content:
-                        '❌ This channel is not a registered queue channel.'
+                        '<:Cross:1558553359642918952> This channel is not a registered queue channel.'
                 });
             }
 
@@ -67,7 +67,7 @@ module.exports = {
 
                 return interaction.editReply({
                     content:
-                        '❌ Failed to open the queue in the database.'
+                        '<:Cross:1558553359642918952> Failed to open the queue in the database.'
                 });
             }
 
@@ -115,7 +115,7 @@ module.exports = {
             if (interaction.deferred) {
                 await interaction.editReply({
                     content:
-                        '❌ Something went wrong while opening the queue.'
+                        '<:Cross:1558553359642918952> Something went wrong while opening the queue.'
                 }).catch(() => {});
             }
         }

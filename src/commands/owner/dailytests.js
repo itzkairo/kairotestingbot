@@ -28,7 +28,7 @@ module.exports = {
             console.error("Daily Tests Error:", error);
 
             return interaction.editReply({
-                content: "❌ Failed to load today's testing statistics."
+                content: "<:Cross:1558553359642918952> Failed to load today's testing statistics."
             });
         }
 

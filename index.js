@@ -73,7 +73,7 @@ for (const folder of commandFolders) {
 
         if ('data' in command && 'execute' in command) {
             client.commands.set(command.data.name, command);
-            console.log(`✅ Loaded Command: ${command.data.name}`);
+            console.log(`<:tick:1558554326887047228> Loaded Command: ${command.data.name}`);
         }
     }
 }
@@ -98,7 +98,7 @@ for (const file of eventFiles) {
         client.on(event.name, (...args) => event.execute(...args));
     }
 
-    console.log(`✅ Loaded Event: ${event.name}`);
+    console.log(`<:tick:1558554326887047228> Loaded Event: ${event.name}`);
 }
 
 // ==========================================
@@ -110,5 +110,5 @@ client.login(process.env.TOKEN)
         console.log('🤖 KairoTiers Bot Logged In');
     })
     .catch(error => {
-        console.error('❌ Discord Login Failed:', error);
+        console.error('<:Cross:1558553359642918952> Discord Login Failed:', error);
     });

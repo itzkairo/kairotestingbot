@@ -27,7 +27,7 @@ module.exports = {
                 console.error("Tester Leaderboard Error:", error);
 
                 return interaction.editReply({
-                    content: "❌ Failed to load the tester leaderboard."
+                    content: "<:Cross:1558553359642918952> Failed to load the tester leaderboard."
                 });
             }
 
@@ -113,7 +113,7 @@ module.exports = {
             console.error("Tester Leaderboard Error:", error);
 
             await interaction.editReply({
-                content: "❌ Something went wrong while loading the leaderboard."
+                content: "<:Cross:1558553359642918952> Something went wrong while loading the leaderboard."
             }).catch(() => {});
         }
     }

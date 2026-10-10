@@ -38,7 +38,7 @@ module.exports = {
         if (!perms.isTester(interaction.member)) {
 
             return interaction.reply({
-                content: '❌ Only testers can use this command.',
+                content: '<:Cross:1558553359642918952> Only testers can use this command.',
                 flags: 64
             });
         }
@@ -72,7 +72,7 @@ module.exports = {
 
                 return interaction.editReply({
                     content:
-                        '❌ Failed to check the player cooldown.'
+                        '<:Cross:1558553359642918952> Failed to check the player cooldown.'
                 });
             }
 
@@ -100,13 +100,13 @@ module.exports = {
 
                 return interaction.editReply({
                     content:
-                        '❌ Failed to remove the cooldown.'
+                        '<:Cross:1558553359642918952> Failed to remove the cooldown.'
                 });
             }
 
             return interaction.editReply({
                 content:
-                    `✅ Removed the **${gamemode}** testing cooldown from <@${user.id}>.`
+                    `<:tick:1558554326887047228> Removed the **${gamemode}** testing cooldown from <@${user.id}>.`
             });
 
         } catch (error) {
@@ -118,7 +118,7 @@ module.exports = {
 
             return interaction.editReply({
                 content:
-                    '❌ Something went wrong while removing the cooldown.'
+                    '<:Cross:1558553359642918952> Something went wrong while removing the cooldown.'
             }).catch(() => {});
         }
     }

@@ -38,7 +38,7 @@ module.exports = {
         // OWNER ONLY
         if (interaction.user.id !== process.env.OWNER_ID) {
             return interaction.reply({
-                content: "❌ Only the bot owner can use this command.",
+                content: "<:Cross:1558553359642918952> Only the bot owner can use this command.",
                 flags: 64
             });
         }
@@ -57,7 +57,7 @@ module.exports = {
 
         if (playerError || !player) {
             return interaction.editReply({
-                content: "❌ Player profile not found."
+                content: "<:Cross:1558553359642918952> Player profile not found."
             });
         }
 
@@ -66,7 +66,7 @@ module.exports = {
 
         if (!gamemodeTiers) {
             return interaction.editReply({
-                content: `❌ Tier roles for **${gamemode}** are not configured.`
+                content: `<:Cross:1558553359642918952> Tier roles for **${gamemode}** are not configured.`
             });
         }
 
@@ -106,9 +106,9 @@ module.exports = {
         try {
 
             if (!process.env.WEBSITE_API_URL) {
-                console.error("❌ WEBSITE_API_URL is missing from .env");
+                console.error("<:Cross:1558553359642918952> WEBSITE_API_URL is missing from .env");
             } else if (!process.env.WEBSITE_BOT_SECRET) {
-                console.error("❌ WEBSITE_BOT_SECRET is missing from .env");
+                console.error("<:Cross:1558553359642918952> WEBSITE_BOT_SECRET is missing from .env");
             } else {
 
                 const response = await fetch(
@@ -131,20 +131,20 @@ module.exports = {
 
                 if (!response.ok) {
                     console.error(
-                        "❌ Website Sync Error:",
+                        "<:Cross:1558553359642918952> Website Sync Error:",
                         response.status,
                         await response.text()
                     );
                 } else {
                     console.log(
-                        `✅ Website synced: ${player.ign} → ${gamemode} → Unranked`
+                        `<:tick:1558554326887047228> Website synced: ${player.ign} → ${gamemode} → Unranked`
                     );
                 }
             }
 
         } catch (error) {
             console.error(
-                "❌ Website Tier Remove Sync Failed:",
+                "<:Cross:1558553359642918952> Website Tier Remove Sync Failed:",
                 error
             );
         }
@@ -152,7 +152,7 @@ module.exports = {
         // Final response
         await interaction.editReply({
             content:
-                `✅ **Tier Removed Successfully**\n\n` +
+                `<:tick:1558554326887047228> **Tier Removed Successfully**\n\n` +
                 `Player: **${player.ign}**\n` +
                 `Gamemode: **${gamemode}**\n` +
                 `Status: **Unranked**\n` +

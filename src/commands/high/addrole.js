@@ -22,7 +22,7 @@ module.exports = {
     async execute(interaction) {
         if (interaction.user.id !== config.roles.ownerId) {
             return interaction.reply({
-                content: '❌ Only the bot owner can use this command.',
+                content: '<:Cross:1558553359642918952> Only the bot owner can use this command.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -35,7 +35,7 @@ module.exports = {
             !channel.topic?.includes('HT_USER:')
         ) {
             return interaction.reply({
-                content: '❌ Use this command inside a High Test ticket.',
+                content: '<:Cross:1558553359642918952> Use this command inside a High Test ticket.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -44,7 +44,7 @@ module.exports = {
 
         if (role.id === interaction.guild.id) {
             return interaction.reply({
-                content: '❌ You cannot add @everyone to a ticket.',
+                content: '<:Cross:1558553359642918952> You cannot add @everyone to a ticket.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -59,14 +59,14 @@ module.exports = {
             });
 
             return interaction.reply({
-                content: `✅ ${role} can now access this High Test ticket.`,
+                content: `<:tick:1558554326887047228> ${role} can now access this High Test ticket.`,
                 flags: MessageFlags.Ephemeral
             });
         } catch (error) {
             console.error('HIGH TEST ADDROLE ERROR:', error);
 
             return interaction.reply({
-                content: '❌ Failed to update ticket permissions. Check the bot permissions.',
+                content: '<:Cross:1558553359642918952> Failed to update ticket permissions. Check the bot permissions.',
                 flags: MessageFlags.Ephemeral
             });
         }

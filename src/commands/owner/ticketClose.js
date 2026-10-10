@@ -18,7 +18,7 @@ module.exports = {
 
         if (!perms.isTester(interaction.member)) {
             return interaction.reply({
-                content: '❌ Only testers can use this command.',
+                content: '<:Cross:1558553359642918952> Only testers can use this command.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -29,7 +29,7 @@ module.exports = {
         ) {
             return interaction.reply({
                 content:
-                    '❌ This command can only be used inside a testing ticket.',
+                    '<:Cross:1558553359642918952> This command can only be used inside a testing ticket.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -59,7 +59,7 @@ module.exports = {
 
                 return interaction.editReply({
                     content:
-                        '❌ Failed to complete the testing session.'
+                        '<:Cross:1558553359642918952> Failed to complete the testing session.'
                 });
             }
 
@@ -71,7 +71,7 @@ const transcriptChannel =
             if (!transcriptChannel) {
                 return interaction.editReply({
                     content:
-                        '❌ Transcript channel was not found.'
+                        '<:Cross:1558553359642918952> Transcript channel was not found.'
                 });
             }
 
@@ -211,7 +211,7 @@ const transcriptChannel =
 
             await interaction.editReply({
                 content:
-                    '✅ Testing session completed. Transcript saved. Deleting ticket...'
+                    '<:tick:1558554326887047228> Testing session completed. Transcript saved. Deleting ticket...'
             });
 
             await ticketChannel.delete(
@@ -232,7 +232,7 @@ const transcriptChannel =
 
                 await interaction.editReply({
                     content:
-                        '❌ Failed to create transcript or delete the ticket.'
+                        '<:Cross:1558553359642918952> Failed to create transcript or delete the ticket.'
                 }).catch(() => {});
             }
         }

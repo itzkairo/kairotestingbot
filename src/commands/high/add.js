@@ -1,45 +1,65 @@
+
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const config = require('../../config/config');
-const supabase = require('../../database/supabase');
+
+const HIGH_TEST_CATEGORY_ID = '1538792400737148978';
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('add')
-        .setDescription('Add a player to the High Test allowlist')
+        .setDescription('Give a player access to this High Test ticket')
         .addUserOption(option =>
-            option.setName('player')
-                .setDescription('Player to add')
+            option
+                .setName('player')
+                .setDescription('Player to add to this ticket')
                 .setRequired(true)
         ),
 
     async execute(interaction) {
         if (interaction.user.id !== config.roles.ownerId) {
             return interaction.reply({
-                content: '❌ Only the bot owner can use this command.',
+                content: '<:Cross:1558553359642918952> Only the bot owner can use this command.',
+                flags: MessageFlags.Ephemeral
+            });
+        }
+
+        const channel = interaction.channel;
+
+        if (
+            !channel ||
+            channel.parentId !== HIGH_TEST_CATEGORY_ID ||
+            !channel.topic?.includes('HT_USER:')
+        ) {
+            return interaction.reply({
+                content: '<:Cross:1558553359642918952> Use this command inside a High Test ticket.',
                 flags: MessageFlags.Ephemeral
             });
         }
 
         const player = interaction.options.getUser('player');
 
-        const { error } = await supabase
-            .from('high_test_players')
-            .upsert({
-                discord_id: player.id,
-                added_by: interaction.user.id
-            });
-
-        if (error) {
-            console.error('HIGH TEST ADD ERROR:', error);
-            return interaction.reply({
-                content: '❌ Failed to add player. Check the database.',
-                flags: MessageFlags.Ephemeral
-            });
-        }
-
-        return interaction.reply({
-            content: `✅ ${player} has been added to the High Test allowlist.`,
+        await interaction.deferReply({
             flags: MessageFlags.Ephemeral
         });
+
+        try {
+            await channel.permissionOverwrites.edit(player.id, {
+                ViewChannel: true,
+                SendMessages: true,
+                ReadMessageHistory: true,
+                AttachFiles: true,
+                EmbedLinks: true
+            });
+
+            return interaction.editReply({
+                content: `<:tick:1558554326887047228> ${player} has been added to this ticket.`
+            });
+        } catch (error) {
+            console.error('HIGH TEST ADD ERROR:', error);
+
+            return interaction.editReply({
+                content: '<:Cross:1558553359642918952> Failed to give the player access to this ticket. Check the bot permissions.'
+            });
+        }
     }
 };

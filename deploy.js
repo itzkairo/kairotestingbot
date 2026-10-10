@@ -33,7 +33,7 @@ for (const folder of commandFolders) {
             if (!command.data || typeof command.data.toJSON !== 'function') {
 
                 console.error(
-                    `❌ INVALID COMMAND FILE: ${filePath}`
+                    `<:Cross:1558553359642918952> INVALID COMMAND FILE: ${filePath}`
                 );
 
                 console.error(
@@ -46,7 +46,7 @@ for (const folder of commandFolders) {
             if (typeof command.execute !== 'function') {
 
                 console.error(
-                    `❌ MISSING execute(): ${filePath}`
+                    `<:Cross:1558553359642918952> MISSING execute(): ${filePath}`
                 );
 
                 continue;
@@ -54,12 +54,12 @@ for (const folder of commandFolders) {
 
             commands.push(command.data.toJSON());
 
-            console.log(`✅ Loaded command: ${command.data.name}`);
+            console.log(`<:tick:1558554326887047228> Loaded command: ${command.data.name}`);
 
         } catch (error) {
 
             console.error(
-                `❌ Failed loading command: ${filePath}`
+                `<:Cross:1558553359642918952> Failed loading command: ${filePath}`
             );
 
             console.error(error);
@@ -91,12 +91,12 @@ const rest = new REST({ version: '10' })
         );
 
         console.log(
-            `✅ Successfully deployed ${data.length} commands.`
+            `<:tick:1558554326887047228> Successfully deployed ${data.length} commands.`
         );
 
     } catch (error) {
 
-        console.error('❌ Command deployment failed:');
+        console.error('<:Cross:1558553359642918952> Command deployment failed:');
         console.error(error);
 
     }

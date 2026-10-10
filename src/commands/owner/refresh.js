@@ -24,7 +24,7 @@ module.exports = {
         if (!gamemode) {
             return interaction.reply({
                 content:
-                    '❌ This channel is not a KairoTiers queue channel.',
+                    '<:Cross:1558553359642918952> This channel is not a KairoTiers queue channel.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -57,7 +57,7 @@ module.exports = {
 
                 await interaction.reply({
                     content:
-                        '❌ Failed to refresh the queue panel.',
+                        '<:Cross:1558553359642918952> Failed to refresh the queue panel.',
                     flags: MessageFlags.Ephemeral
                 });
 

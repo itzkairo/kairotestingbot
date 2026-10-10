@@ -1,43 +1,67 @@
+
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const config = require('../../config/config');
-const supabase = require('../../database/supabase');
+
+const HIGH_TEST_CATEGORY_ID = '1538792400737148978';
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('remove')
-        .setDescription('Remove a player from the High Test allowlist')
+        .setDescription('Remove a player from this High Test ticket')
         .addUserOption(option =>
-            option.setName('player')
-                .setDescription('Player to remove')
+            option
+                .setName('player')
+                .setDescription('Player to remove from this ticket')
                 .setRequired(true)
         ),
 
     async execute(interaction) {
         if (interaction.user.id !== config.roles.ownerId) {
             return interaction.reply({
-                content: '❌ Only the bot owner can use this command.',
+                content: '<:Cross:1558553359642918952> Only the bot owner can use this command.',
+                flags: MessageFlags.Ephemeral
+            });
+        }
+
+        const channel = interaction.channel;
+
+        if (
+            !channel ||
+            channel.parentId !== HIGH_TEST_CATEGORY_ID ||
+            !channel.topic?.includes('HT_USER:')
+        ) {
+            return interaction.reply({
+                content: '<:Cross:1558553359642918952> Use this command inside a High Test ticket.',
                 flags: MessageFlags.Ephemeral
             });
         }
 
         const player = interaction.options.getUser('player');
 
-        const { error } = await supabase
-            .from('high_test_players')
-            .delete()
-            .eq('discord_id', player.id);
-
-        if (error) {
-            console.error('HIGH TEST REMOVE ERROR:', error);
-            return interaction.reply({
-                content: '❌ Failed to remove player.',
-                flags: MessageFlags.Ephemeral
-            });
-        }
-
-        return interaction.reply({
-            content: `✅ ${player} has been removed from the High Test allowlist.`,
+        await interaction.deferReply({
             flags: MessageFlags.Ephemeral
         });
+
+        try {
+            const existingOverwrite = channel.permissionOverwrites.cache.get(player.id);
+
+            if (!existingOverwrite) {
+                return interaction.editReply({
+                    content: `ℹ️ ${player} does not have a separate access permission in this ticket.`
+                });
+            }
+
+            await channel.permissionOverwrites.delete(player.id);
+
+            return interaction.editReply({
+                content: `<:tick:1558554326887047228> ${player} has been removed from this ticket.`
+            });
+        } catch (error) {
+            console.error('HIGH TEST REMOVE ERROR:', error);
+
+            return interaction.editReply({
+                content: "<:Cross:1558553359642918952> Failed to remove the player's ticket access. Check the bot permissions."
+            });
+        }
     }
 };

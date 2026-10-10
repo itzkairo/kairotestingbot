@@ -57,14 +57,14 @@ module.exports = {
 
                         await interaction.editReply({
                             content:
-                                '❌ An error occurred while executing this command.'
+                                '<:Cross:1558553359642918952> An error occurred while executing this command.'
                         }).catch(() => {});
 
                     } else {
 
                         await interaction.reply({
                             content:
-                                '❌ An error occurred while executing this command.',
+                                '<:Cross:1558553359642918952> An error occurred while executing this command.',
                             flags:
                                 MessageFlags.Ephemeral
                         }).catch(() => {});
@@ -99,7 +99,7 @@ module.exports = {
 
                         return await interaction.reply({
                             content:
-                                '❌ Only the bot owner can reset the tester leaderboard.',
+                                '<:Cross:1558553359642918952> Only the bot owner can reset the tester leaderboard.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -126,7 +126,7 @@ module.exports = {
 
                             return await interaction.reply({
                                 content:
-                                    '❌ Failed to reset the tester leaderboard.',
+                                    '<:Cross:1558553359642918952> Failed to reset the tester leaderboard.',
                                 flags:
                                     MessageFlags.Ephemeral
                             });
@@ -134,7 +134,7 @@ module.exports = {
 
                         return await interaction.reply({
                             content:
-                                '✅ Tester leaderboard has been reset successfully.',
+                                '<:tick:1558554326887047228> Tester leaderboard has been reset successfully.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -148,7 +148,7 @@ module.exports = {
 
                         return await interaction.reply({
                             content:
-                                '❌ Something went wrong while resetting the leaderboard.',
+                                '<:Cross:1558553359642918952> Something went wrong while resetting the leaderboard.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -202,7 +202,7 @@ module.exports = {
 
                         return await interaction.reply({
                             content:
-                                '❌ Could not check your High Test cooldown.',
+                                '<:Cross:1558553359642918952> Could not check your High Test cooldown.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -256,7 +256,7 @@ module.exports = {
 
                         return await interaction.reply({
                             content:
-                                '❌ Database error while checking your profile.',
+                                '<:Cross:1558553359642918952> Database error while checking your profile.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -266,264 +266,264 @@ module.exports = {
 
                         return await interaction.reply({
                             content:
-                                '❌ You are not registered.\n\nPlease register your KairoTiers profile first.',
+                                '<:Cross:1558553359642918952> You are not registered.\n\nPlease register your KairoTiers profile first.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
                     }
 
-// =============================================
-// CHECK HIGH TEST ALLOWLIST
-// Owners can manually allow players with /add.
-// =============================================
+    // =============================================
+    // CHECK HIGH TEST ALLOWLIST
+    // Owners can manually allow players with /add.
+    // =============================================
 
-const { data: allowlistedPlayer, error: allowlistError } = await supabase
-    .from('high_test_players')
-    .select('discord_id')
-    .eq('discord_id', interaction.user.id)
-    .maybeSingle();
+    const { data: allowlistedPlayer, error: allowlistError } = await supabase
+        .from('high_test_players')
+        .select('discord_id')
+        .eq('discord_id', interaction.user.id)
+        .maybeSingle();
 
-if (allowlistError) {
-    console.error('HIGH TEST ALLOWLIST CHECK ERROR:', JSON.stringify(allowlistError, null, 2));
-    return await interaction.reply({
-        content: '❌ Database error while checking High Test access.',
-        flags: MessageFlags.Ephemeral
-    });
-}
+    if (allowlistError) {
+        console.error('HIGH TEST ALLOWLIST CHECK ERROR:', JSON.stringify(allowlistError, null, 2));
+        return await interaction.reply({
+            content: '<:Cross:1558553359642918952> Database error while checking High Test access.',
+            flags: MessageFlags.Ephemeral
+        });
+    }
 
-const isAllowlisted = Boolean(allowlistedPlayer);
+    const isAllowlisted = Boolean(allowlistedPlayer);
 
-// =============================================
-// CHECK LT3 OR HIGHER UNLESS ALLOWLISTED
-// GET LATEST TIER FROM RESULTS TABLE
-// =============================================
+    // =============================================
+    // CHECK LT3 OR HIGHER UNLESS ALLOWLISTED
+    // GET LATEST TIER FROM RESULTS TABLE
+    // =============================================
 
-const {
-    data: latestResult,
-    error: tierError
-} = await supabase
-    .from('results')
-    .select('new_tier, created_at')
-    .eq(
-        'discord_id',
-        interaction.user.id
-    )
-    .eq(
-        'gamemode',
-        highGamemode
-    )
-    .order(
-        'created_at',
-        {
-            ascending: false
-        }
-    )
-    .limit(1)
-    .maybeSingle();
+    const {
+        data: latestResult,
+        error: tierError
+    } = await supabase
+        .from('results')
+        .select('new_tier, created_at')
+        .eq(
+            'discord_id',
+            interaction.user.id
+        )
+        .eq(
+            'gamemode',
+            highGamemode
+        )
+        .order(
+            'created_at',
+            {
+                ascending: false
+            }
+        )
+        .limit(1)
+        .maybeSingle();
 
-if (tierError) {
+    if (tierError) {
 
-    console.error(
-        'HIGH TEST TIER CHECK ERROR:',
-        tierError
+        console.error(
+            'HIGH TEST TIER CHECK ERROR:',
+            tierError
+        );
+
+        return await interaction.reply({
+            content:
+                '<:Cross:1558553359642918952> Database error while checking your current tier.',
+            flags:
+                MessageFlags.Ephemeral
+        });
+    }
+
+    const currentTier =
+        latestResult?.new_tier ||
+        'Unranked';
+
+    // LT3 or higher
+    const eligibleTiers = [
+        'LT3',
+        'HT3'
+    ];
+
+    if (
+        !isAllowlisted &&
+        !eligibleTiers.includes(currentTier)
+    ) {
+
+        return await interaction.reply({
+            content:
+                `<:Cross:1558553359642918952> You need **LT3 or higher** in **${highGamemode}** to apply for a High Test.\n\n` +
+                `Your current **${highGamemode}** tier is **${currentTier}**.`,
+            flags:
+                MessageFlags.Ephemeral
+        });
+    }
+
+    console.log(
+        `<:tick:1558554326887047228> High Test eligibility: ${interaction.user.tag} | ${highGamemode} | ${currentTier}`
     );
 
-    return await interaction.reply({
-        content:
-            '❌ Database error while checking your current tier.',
-        flags:
-            MessageFlags.Ephemeral
-    });
-}
+                        // =============================================
+                        // OPEN QUESTIONS MODAL
+                        // =============================================
 
-const currentTier =
-    latestResult?.new_tier ||
-    'Unranked';
+                        const modal =
+                            new ModalBuilder()
+                                .setCustomId(
+                                    `high_test_modal_${highGamemode}`
+                                )
+                                .setTitle(
+                                    `${highGamemode} High Test`
+                                );
 
-// LT3 or higher
-const eligibleTiers = [
-    'LT3',
-    'HT3'
-];
+                        const currentTierInput =
+                            new TextInputBuilder()
+                                .setCustomId(
+                                    'current_tier'
+                                )
+                                .setLabel(
+                                    'Current Tier'
+                                )
+                                .setPlaceholder(
+                                    'Example: LT3'
+                                )
+                                .setStyle(
+                                    TextInputStyle.Short
+                                )
+                                .setRequired(true)
+                                .setMaxLength(20);
 
-if (
-    !isAllowlisted &&
-    !eligibleTiers.includes(currentTier)
-) {
+                        const regionInput =
+                            new TextInputBuilder()
+                                .setCustomId(
+                                    'region'
+                                )
+                                .setLabel(
+                                    'Region'
+                                )
+                                .setPlaceholder(
+                                    'EU, NA, AS, AU, ME'
+                                )
+                                .setStyle(
+                                    TextInputStyle.Short
+                                )
+                                .setRequired(true)
+                                .setMaxLength(20);
 
-    return await interaction.reply({
-        content:
-            `❌ You need **LT3 or higher** in **${highGamemode}** to apply for a High Test.\n\n` +
-            `Your current **${highGamemode}** tier is **${currentTier}**.`,
-        flags:
-            MessageFlags.Ephemeral
-    });
-}
+                        const serverInput =
+                            new TextInputBuilder()
+                                .setCustomId(
+                                    'preferred_server'
+                                )
+                                .setLabel(
+                                    'Preferred Server'
+                                )
+                                .setPlaceholder(
+                                    'Example: Minemen Club'
+                                )
+                                .setStyle(
+                                    TextInputStyle.Short
+                                )
+                                .setRequired(true)
+                                .setMaxLength(50);
 
-console.log(
-    `✅ High Test eligibility: ${interaction.user.tag} | ${highGamemode} | ${currentTier}`
-);
+                        modal.addComponents(
+                            new ActionRowBuilder()
+                                .addComponents(
+                                    currentTierInput
+                                ),
 
-                    // =============================================
-                    // OPEN QUESTIONS MODAL
-                    // =============================================
+                            new ActionRowBuilder()
+                                .addComponents(
+                                    regionInput
+                                ),
 
-                    const modal =
-                        new ModalBuilder()
-                            .setCustomId(
-                                `high_test_modal_${highGamemode}`
-                            )
-                            .setTitle(
-                                `${highGamemode} High Test`
+                            new ActionRowBuilder()
+                                .addComponents(
+                                    serverInput
+                                )
+                        );
+
+                        return await interaction.showModal(
+                            modal
+                        );
+                    }
+
+                    // =================================================
+                    // HIGH TEST CLOSE / SKIP
+                    // =================================================
+
+                    if (
+                        customId === 'high_ticket_close' ||
+                        customId === 'high_ticket_skip'
+                    ) {
+                        const isSkip = customId === 'high_ticket_skip';
+                        const isOwner = interaction.user.id === config.roles.ownerId;
+
+                        const { data: staffRoles, error: staffRolesError } = await supabase
+                            .from('high_test_staff_roles')
+                            .select('role_id');
+
+    
+    if (staffRolesError) {
+        console.error(
+            'HIGH TEST STAFF CHECK ERROR:',
+            JSON.stringify(staffRolesError, null, 2)
+        );
+
+        return await interaction.reply({
+            content: '<:Cross:1558553359642918952> Could not verify High Test staff permissions. Check bot logs.',
+            flags: MessageFlags.Ephemeral
+        });
+    }
+
+    const staffRoleIds = (staffRoles || [])
+        .map(row => String(row.role_id));
+
+    // Owner bypasses the staff-role list.
+    // All other users must have a role explicitly added via /addrole.
+
+    const HIGH_TEST_STAFF_ROLE_ID = '1542798698617249842';
+
+    const memberRoleIds = interaction.member?.roles?.cache
+        ? [...interaction.member.roles.cache.keys()]
+        : [];
+
+    const isHighTestStaff = memberRoleIds.includes(
+        HIGH_TEST_STAFF_ROLE_ID
+    );
+
+    if (!isOwner && !isHighTestStaff) {
+        return await interaction.reply({
+            content: '<:Cross:1558553359642918952> Only High Test staff can close or skip this ticket.',
+            flags: MessageFlags.Ephemeral
+        });
+    }
+
+                        // =============================================
+                        // GET TICKET OWNER
+                        // =============================================
+
+                        const topic =
+                            interaction.channel.topic ||
+                            '';
+
+                        const userMatch =
+                            topic.match(
+                                /HT_USER:(\d+)/
                             );
 
-                    const currentTierInput =
-                        new TextInputBuilder()
-                            .setCustomId(
-                                'current_tier'
-                            )
-                            .setLabel(
-                                'Current Tier'
-                            )
-                            .setPlaceholder(
-                                'Example: LT3'
-                            )
-                            .setStyle(
-                                TextInputStyle.Short
-                            )
-                            .setRequired(true)
-                            .setMaxLength(20);
+                        const gamemodeMatch =
+                            topic.match(
+                                /GAMEMODE:([A-Za-z]+)/
+                            );
 
-                    const regionInput =
-                        new TextInputBuilder()
-                            .setCustomId(
-                                'region'
-                            )
-                            .setLabel(
-                                'Region'
-                            )
-                            .setPlaceholder(
-                                'EU, NA, AS, AU, ME'
-                            )
-                            .setStyle(
-                                TextInputStyle.Short
-                            )
-                            .setRequired(true)
-                            .setMaxLength(20);
-
-                    const serverInput =
-                        new TextInputBuilder()
-                            .setCustomId(
-                                'preferred_server'
-                            )
-                            .setLabel(
-                                'Preferred Server'
-                            )
-                            .setPlaceholder(
-                                'Example: Minemen Club'
-                            )
-                            .setStyle(
-                                TextInputStyle.Short
-                            )
-                            .setRequired(true)
-                            .setMaxLength(50);
-
-                    modal.addComponents(
-                        new ActionRowBuilder()
-                            .addComponents(
-                                currentTierInput
-                            ),
-
-                        new ActionRowBuilder()
-                            .addComponents(
-                                regionInput
-                            ),
-
-                        new ActionRowBuilder()
-                            .addComponents(
-                                serverInput
-                            )
-                    );
-
-                    return await interaction.showModal(
-                        modal
-                    );
-                }
-
-                // =================================================
-                // HIGH TEST CLOSE / SKIP
-                // =================================================
-
-                if (
-                    customId === 'high_ticket_close' ||
-                    customId === 'high_ticket_skip'
-                ) {
-                    const isSkip = customId === 'high_ticket_skip';
-                    const isOwner = interaction.user.id === config.roles.ownerId;
-
-                    const { data: staffRoles, error: staffRolesError } = await supabase
-                        .from('high_test_staff_roles')
-                        .select('role_id');
-
- 
-if (staffRolesError) {
-    console.error(
-        'HIGH TEST STAFF CHECK ERROR:',
-        JSON.stringify(staffRolesError, null, 2)
-    );
-
-    return await interaction.reply({
-        content: '❌ Could not verify High Test staff permissions. Check bot logs.',
-        flags: MessageFlags.Ephemeral
-    });
-}
-
-const staffRoleIds = (staffRoles || [])
-    .map(row => String(row.role_id));
-
-// Owner bypasses the staff-role list.
-// All other users must have a role explicitly added via /addrole.
-
-const HIGH_TEST_STAFF_ROLE_ID = '1542798698617249842';
-
-const memberRoleIds = interaction.member?.roles?.cache
-    ? [...interaction.member.roles.cache.keys()]
-    : [];
-
-const isHighTestStaff = memberRoleIds.includes(
-    HIGH_TEST_STAFF_ROLE_ID
-);
-
-if (!isOwner && !isHighTestStaff) {
-    return await interaction.reply({
-        content: '❌ Only High Test staff can close or skip this ticket.',
-        flags: MessageFlags.Ephemeral
-    });
-}
-
-                    // =============================================
-                    // GET TICKET OWNER
-                    // =============================================
-
-                    const topic =
-                        interaction.channel.topic ||
-                        '';
-
-                    const userMatch =
-                        topic.match(
-                            /HT_USER:(\d+)/
-                        );
-
-                    const gamemodeMatch =
-                        topic.match(
-                            /GAMEMODE:([A-Za-z]+)/
-                        );
-
-                    if (!userMatch) {
+                        if (!userMatch) {
 
                         return await interaction.reply({
                             content:
-                                '❌ Could not identify the ticket owner.',
+                                '<:Cross:1558553359642918952> Could not identify the ticket owner.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -714,7 +714,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.editReply({
                             content:
-                                '❌ Transcript channel could not be found. Ticket was NOT closed.'
+                                '<:Cross:1558553359642918952> Transcript channel could not be found. Ticket was NOT closed.'
                         });
                     }
 
@@ -846,7 +846,7 @@ if (!isOwner && !isHighTestStaff) {
                     await interaction.editReply({
                         content: isSkip
                             ? '⏭️ Transcript saved successfully. Closing ticket without a cooldown.'
-                            : '✅ Transcript saved successfully.\n🔒 15-day High Test cooldown applied.\n🗑️ Closing ticket...'
+                            : '<:tick:1558554326887047228> Transcript saved successfully.\n🔒 15-day High Test cooldown applied.\n🗑️ Closing ticket...'
                     });
 
                     // =============================================
@@ -1002,7 +1002,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ Invalid waitlist.',
+                                '<:Cross:1558553359642918952> Invalid waitlist.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1016,7 +1016,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ You cannot join the testing waitlist.',
+                                '<:Cross:1558553359642918952> You cannot join the testing waitlist.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1030,7 +1030,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ **Register your profile first.**\n\nClick **Register / Update Profile** before selecting a waitlist.',
+                                '<:Cross:1558553359642918952> **Register your profile first.**\n\nClick **Register / Update Profile** before selecting a waitlist.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1045,7 +1045,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                `❌ Waitlist role for **${gamemode}** is not configured.`,
+                                `<:Cross:1558553359642918952> Waitlist role for **${gamemode}** is not configured.`,
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1060,7 +1060,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ The waitlist role could not be found.',
+                                '<:Cross:1558553359642918952> The waitlist role could not be found.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1081,7 +1081,7 @@ if (!isOwner && !isHighTestStaff) {
 
                             return await interaction.reply({
                                 content:
-                                    `✅ You left the **${gamemode}** waitlist.`,
+                                    `<:tick:1558554326887047228> You left the **${gamemode}** waitlist.`,
                                 flags:
                                     MessageFlags.Ephemeral
                             });
@@ -1095,7 +1095,7 @@ if (!isOwner && !isHighTestStaff) {
 
                             return await interaction.reply({
                                 content:
-                                    '❌ Could not remove the waitlist role.',
+                                    '<:Cross:1558553359642918952> Could not remove the waitlist role.',
                                 flags:
                                     MessageFlags.Ephemeral
                             });
@@ -1111,7 +1111,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                `✅ You joined the **${gamemode}** waitlist!`,
+                                `<:tick:1558554326887047228> You joined the **${gamemode}** waitlist!`,
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1125,7 +1125,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ I could not give you the waitlist role. Please contact staff.',
+                                '<:Cross:1558553359642918952> I could not give you the waitlist role. Please contact staff.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1167,7 +1167,7 @@ if (!isOwner && !isHighTestStaff) {
 
                     return await interaction.reply({
                         content:
-                            '❌ You are blacklisted from joining KairoTiers testing queues.',
+                            '<:Cross:1558553359642918952> You are blacklisted from joining KairoTiers testing queues.',
                         flags:
                             MessageFlags.Ephemeral
                     });
@@ -1185,7 +1185,7 @@ if (!isOwner && !isHighTestStaff) {
 
                     return await interaction.reply({
                         content:
-                            '❌ **Register your profile first.**',
+                            '<:Cross:1558553359642918952> **Register your profile first.**',
                         flags:
                             MessageFlags.Ephemeral
                     });
@@ -1259,7 +1259,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ Could not check your testing cooldown. Please contact staff.',
+                                '<:Cross:1558553359642918952> Could not check your testing cooldown. Please contact staff.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1334,7 +1334,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ Could not check your queue status.',
+                                '<:Cross:1558553359642918952> Could not check your queue status.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1344,7 +1344,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ You are already in a queue! Leave your current queue first.',
+                                '<:Cross:1558553359642918952> You are already in a queue! Leave your current queue first.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1380,7 +1380,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ Could not check your testing session.',
+                                '<:Cross:1558553359642918952> Could not check your testing session.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1467,7 +1467,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ You already have an active testing session.',
+                                '<:Cross:1558553359642918952> You already have an active testing session.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1512,7 +1512,7 @@ if (!isOwner && !isHighTestStaff) {
 
                             return await interaction.reply({
                                 content:
-                                    '❌ You are already in a queue! Leave your current queue first.',
+                                    '<:Cross:1558553359642918952> You are already in a queue! Leave your current queue first.',
                                 flags:
                                     MessageFlags.Ephemeral
                             });
@@ -1520,7 +1520,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ Failed to join the queue. Please try again.',
+                                '<:Cross:1558553359642918952> Failed to join the queue. Please try again.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1594,7 +1594,7 @@ if (!isOwner && !isHighTestStaff) {
 
                     await interaction.reply({
                         content:
-                            `✅ You joined the **${gamemode}** queue.` +
+                            `<:tick:1558554326887047228> You joined the **${gamemode}** queue.` +
                             (
                                 position
                                     ? ` You are currently **#${position}**.`
@@ -1707,7 +1707,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ Failed to check your queue status.',
+                                '<:Cross:1558553359642918952> Failed to check your queue status.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1738,7 +1738,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ Failed to leave the queue.',
+                                '<:Cross:1558553359642918952> Failed to leave the queue.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -1746,7 +1746,7 @@ if (!isOwner && !isHighTestStaff) {
 
                     await interaction.reply({
                         content:
-                            '✅ You left the queue.',
+                            '<:tick:1558554326887047228> You left the queue.',
                         flags:
                             MessageFlags.Ephemeral
                     });
@@ -1994,7 +1994,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ Player profile not found.',
+                                '<:Cross:1558553359642918952> Player profile not found.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -2020,7 +2020,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                `❌ You already have an open High Test ticket: ${existingTicket}`,
+                                `<:Cross:1558553359642918952> You already have an open High Test ticket: ${existingTicket}`,
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -2053,7 +2053,7 @@ if (!isOwner && !isHighTestStaff) {
                     if (staffRolesError) {
                         console.error('HIGH TEST STAFF ROLES ERROR:', staffRolesError);
                         return await interaction.reply({
-                            content: '❌ Could not load High Test staff roles.',
+                            content: '<:Cross:1558553359642918952> Could not load High Test staff roles.',
                             flags: MessageFlags.Ephemeral
                         });
                     }
@@ -2246,7 +2246,7 @@ if (!isOwner && !isHighTestStaff) {
 
                     return await interaction.reply({
                         content:
-                            `✅ Your **${highGamemode} High Test** ticket has been created: ${ticketChannel}`,
+                            `<:tick:1558554326887047228> Your **${highGamemode} High Test** ticket has been created: ${ticketChannel}`,
                         flags:
                             MessageFlags.Ephemeral
                     });
@@ -2317,7 +2317,7 @@ if (!isOwner && !isHighTestStaff) {
 
                         return await interaction.reply({
                             content:
-                                '❌ Failed to save your profile.',
+                                '<:Cross:1558553359642918952> Failed to save your profile.',
                             flags:
                                 MessageFlags.Ephemeral
                         });
@@ -2339,7 +2339,7 @@ if (!isOwner && !isHighTestStaff) {
 
                     return await interaction.reply({
                         content:
-                            `✅ Profile updated for **${ign}**.\nYou can now join testing queues.`,
+                            `<:tick:1558554326887047228> Profile updated for **${ign}**.\nYou can now join testing queues.`,
                         flags:
                             MessageFlags.Ephemeral
                     });
@@ -2362,7 +2362,7 @@ if (!isOwner && !isHighTestStaff) {
 
                 await interaction.editReply({
                     content:
-                        '❌ Something went wrong. Please try again.'
+                        '<:Cross:1558553359642918952> Something went wrong. Please try again.'
                 }).catch(() => {});
 
                 return;
@@ -2370,7 +2370,7 @@ if (!isOwner && !isHighTestStaff) {
 
             await interaction.reply({
                 content:
-                    '❌ Something went wrong. Please try again.',
+                    '<:Cross:1558553359642918952> Something went wrong. Please try again.',
                 flags:
                     MessageFlags.Ephemeral
             }).catch(() => {});

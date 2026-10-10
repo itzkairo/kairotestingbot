@@ -38,7 +38,7 @@ module.exports = {
             console.error("Tester Stats Error:", error);
 
             return interaction.editReply({
-                content: "❌ Failed to load tester statistics."
+                content: "<:Cross:1558553359642918952> Failed to load tester statistics."
             });
         }
 
