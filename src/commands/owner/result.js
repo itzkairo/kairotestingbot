@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder } = require('discord.js');
 const config = require('../../config/config');
-const emojis = require('../../utils/emojis');
+const emojis = require('../../config/emojis');
 const perms = require('../../utils/perms');
 const fetch = require('node-fetch');
 
