@@ -1,308 +1,500 @@
-const { SlashCommandBuilder, MessageFlags, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const config = require('../../config/config');
 const emojis = require('../../config/emojis');
-const perms = require('../../utils/perms');
+const supabase = require('../../database/supabase');
+const perms = require('../../utils/permissions');
 const fetch = require('node-fetch');
 
-const COOLDOWN_DAYS = 7;
-
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('rp')
-    .setDescription('Submit a player testing result.')
-    .addUserOption(option =>
-      option
-        .setName('user')
-        .setDescription('The player who was tested.')
-        .setRequired(true)
-    )
-    .addStringOption(option =>
-      option
-        .setName('tier')
-        .setDescription('The tier achieved by the player.')
-        .setRequired(true)
-        .addChoices(
-          { name: 'HT3', value: 'HT3' },
-          { name: 'LT3', value: 'LT3' },
-          { name: 'HT4', value: 'HT4' },
-          { name: 'LT4', value: 'LT4' },
-          { name: 'HT5', value: 'HT5' },
-          { name: 'LT5', value: 'LT5' }
+    data: new SlashCommandBuilder()
+        .setName('rp')
+        .setDescription('Submit a test result')
+
+        .addUserOption(opt =>
+            opt
+                .setName('user')
+                .setDescription('The player')
+                .setRequired(true)
         )
-    )
-    .addStringOption(option =>
-      option
-        .setName('gamemode')
-        .setDescription('The gamemode tested.')
-        .setRequired(true)
-        .addChoices(
-          { name: 'Sword', value: 'Sword' },
-          { name: 'Mace', value: 'Mace' },
-          { name: 'Axe', value: 'Axe' },
-          { name: 'Crystal', value: 'Crystal' },
-          { name: 'NethPot', value: 'NethPot' },
-          { name: 'DiaPot', value: 'DiaPot' },
-          { name: 'SMP', value: 'SMP' },
-          { name: 'UHC', value: 'UHC' }
+
+        .addStringOption(opt =>
+            opt
+                .setName('tier')
+                .setDescription('New Tier')
+                .setRequired(true)
+                .addChoices(
+                    { name: 'HT3', value: 'HT3' },
+                    { name: 'LT3', value: 'LT3' },
+                    { name: 'HT4', value: 'HT4' },
+                    { name: 'LT4', value: 'LT4' },
+                    { name: 'HT5', value: 'HT5' },
+                    { name: 'LT5', value: 'LT5' }
+                )
         )
-    ),
 
-  async execute(interaction) {
-    // Acknowledge the interaction as early as possible.
-    try {
-      await interaction.deferReply({
-        flags: MessageFlags.Ephemeral,
-      });
-    } catch (error) {
-      console.error('[RP] Failed to defer interaction:', error);
-      return;
-    }
+        .addStringOption(opt =>
+            opt
+                .setName('gamemode')
+                .setDescription('Gamemode')
+                .setRequired(true)
+                .addChoices(
+                    { name: 'Sword', value: 'Sword' },
+                    { name: 'Mace', value: 'Mace' },
+                    { name: 'Axe', value: 'Axe' },
+                    { name: 'Crystal', value: 'Crystal' },
+                    { name: 'NethPot', value: 'NethPot' },
+                    { name: 'DiaPot', value: 'DiaPot' },
+                    { name: 'SMP', value: 'SMP' },
+                    { name: 'UHC', value: 'UHC' }
+                )
+        ),
 
-    try {
-      // Tester permission check.
-      if (!perms.isTester(interaction.member)) {
-        return await interaction.editReply({
-          content: `${emojis.cross} You do not have permission to submit results.`,
-        });
-      }
+    async execute(interaction) {
 
-      const player = interaction.options.getUser('user');
-      const tier = interaction.options.getString('tier');
-      const gamemode = interaction.options.getString('gamemode');
-      const gamemodeKey = gamemode.toLowerCase();
+        // =====================================================
+        // TESTER CHECK
+        // =====================================================
 
-      // Find the player's registered profile.
-      const { data: playerData, error: playerError } = await supabase
-        .from('players')
-        .select('*')
-        .eq('discord_id', player.id)
-        .maybeSingle();
+        if (!perms.isTester(interaction.member)) {
+            return interaction.reply({
+                content: '<:Cross:1558553359642918952> Unauthorized.',
+                flags: MessageFlags.Ephemeral
+            });
+        }
 
-      if (playerError) {
-        console.error('[RP] Player lookup failed:', playerError);
-
-        return await interaction.editReply({
-          content: `${emojis.cross} Failed to look up the player's profile.`,
-        });
-      }
-
-      if (!playerData) {
-        return await interaction.editReply({
-          content: `${emojis.cross} This player does not have a registered profile.`,
-        });
-      }
-
-      const playerIgn = playerData.ign;
-
-      // Get the previous tier for this gamemode.
-      const { data: previousResults, error: previousError } = await supabase
-        .from('results')
-        .select('new_tier')
-        .eq('discord_id', player.id)
-        .eq('gamemode', gamemode)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (previousError) {
-        console.error('[RP] Previous-tier lookup failed:', previousError);
-
-        return await interaction.editReply({
-          content: `${emojis.cross} Failed to retrieve the player's previous tier.`,
-        });
-      }
-
-      const previousTier =
-        previousResults?.length > 0
-          ? previousResults[0].new_tier
-          : 'Unranked';
-
-      // Find the configured Discord role for the new tier.
-      const tierRoleId = config.tiers?.[gamemode]?.[tier];
-
-      if (!tierRoleId) {
-        console.error(
-          `[RP] Missing tier role configuration: gamemode=${gamemode}, tier=${tier}`
-        );
-
-        return await interaction.editReply({
-          content: `${emojis.cross} The Discord role for **${gamemode} ${tier}** is not configured.`,
-        });
-      }
-
-      // Fetch the player as a guild member.
-      const member = await interaction.guild.members
-        .fetch(player.id)
-        .catch(() => null);
-
-      if (!member) {
-        return await interaction.editReply({
-          content: `${emojis.cross} Could not find this player in the server.`,
-        });
-      }
-
-      // Remove the player's existing tier role for this gamemode.
-      const configuredGamemodeTiers = config.tiers?.[gamemode] ?? {};
-
-      const oldTierRoleIds = Object.values(configuredGamemodeTiers)
-        .filter(roleId => typeof roleId === 'string' && roleId.length > 0);
-
-      const rolesToRemove = oldTierRoleIds.filter(roleId =>
-        member.roles.cache.has(roleId)
-      );
-
-      if (rolesToRemove.length > 0) {
-        await member.roles.remove(rolesToRemove).catch(error => {
-          console.error('[RP] Failed to remove old tier roles:', error);
-          throw error;
-        });
-      }
-
-      // Add the new tier role.
-      await member.roles.add(tierRoleId);
-
-      // Save the result to Supabase.
-      const { error: resultError } = await supabase
-        .from('results')
-        .insert({
-          discord_id: player.id,
-          ign: playerIgn,
-          gamemode,
-          previous_tier: previousTier,
-          new_tier: tier,
-          tester_id: interaction.user.id,
+        await interaction.deferReply({
+            flags: MessageFlags.Ephemeral
         });
 
-      if (resultError) {
-        console.error('[RP] Result insert failed:', resultError);
-
-        return await interaction.editReply({
-          content: `${emojis.cross} The Discord role was updated, but saving the result failed. Check the console.`,
-        });
-      }
-
-      // Save/update the testing cooldown.
-      const cooldownUntil = new Date(
-        Date.now() + COOLDOWN_DAYS * 24 * 60 * 60 * 1000
-      );
-
-      const { error: cooldownError } = await supabase
-        .from('testing_cooldowns')
-        .upsert(
-          {
-            discord_id: player.id,
-            gamemode: 'HighTest',
-            cooldown_until: cooldownUntil.toISOString(),
-          },
-          {
-            onConflict: 'discord_id,gamemode',
-          }
-        );
-
-      if (cooldownError) {
-        console.error('[RP] Cooldown upsert failed:', cooldownError);
-      }
-
-      // Sync the result to the KairoTiers website.
-      const websiteUrl = process.env.WEBSITE_API_URL;
-      const websiteSecret = process.env.WEBSITE_BOT_SECRET;
-
-      if (websiteUrl && websiteSecret) {
         try {
-          const response = await fetch(websiteUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Bot-Secret': websiteSecret,
-            },
-            body: JSON.stringify({
-              discordId: player.id,
-              ign: playerIgn,
-              tier,
-              gamemode: gamemodeKey,
-            }),
-          });
 
-          const responseText = await response.text();
+            const user =
+                interaction.options.getUser('user');
 
-          if (!response.ok) {
-            console.error(
-              '[RP] Website sync failed:',
-              response.status,
-              responseText
+            const tier =
+                interaction.options.getString('tier');
+
+            const gamemode =
+                interaction.options.getString('gamemode');
+
+            // =====================================================
+            // PLAYER PROFILE
+            // =====================================================
+
+            const {
+                data: player,
+                error: playerError
+            } = await supabase
+                .from('players')
+                .select('*')
+                .eq('discord_id', user.id)
+                .maybeSingle();
+
+            if (playerError) {
+
+                console.error(
+                    '<:Cross:1558553359642918952> PLAYER LOOKUP ERROR:',
+                    playerError
+                );
+
+                return interaction.editReply({
+                    content:
+                        '<:Cross:1558553359642918952> Database error while finding the player.'
+                });
+            }
+
+            if (!player) {
+
+                return interaction.editReply({
+                    content:
+                        '<:Cross:1558553359642918952> Player profile not found.'
+                });
+            }
+
+            // =====================================================
+            // PREVIOUS TIER
+            // GET FROM RESULTS TABLE
+            // =====================================================
+
+            const {
+                data: previousResult,
+                error: previousError
+            } = await supabase
+                .from('results')
+                .select('new_tier')
+                .eq('discord_id', user.id)
+                .eq('gamemode', gamemode)
+                .order('created_at', {
+                    ascending: false
+                })
+                .limit(1)
+                .maybeSingle();
+
+            if (previousError) {
+
+                console.error(
+                    '<:Cross:1558553359642918952> PREVIOUS TIER LOOKUP ERROR:',
+                    previousError
+                );
+            }
+
+            const previousTier =
+                previousResult?.new_tier || 'Unranked';
+
+            // =====================================================
+            // TIER ROLE CONFIG
+            // =====================================================
+
+            const gamemodeTiers =
+                config.tiers?.[gamemode];
+
+            if (!gamemodeTiers) {
+
+                return interaction.editReply({
+                    content:
+                        `<:Cross:1558553359642918952> Tier roles for **${gamemode}** are not configured.`
+                });
+            }
+
+            const newRoleId =
+                gamemodeTiers[tier];
+
+            if (!newRoleId) {
+
+                return interaction.editReply({
+                    content:
+                        `<:Cross:1558553359642918952> Role for **${tier} ${gamemode}** was not found.`
+                });
+            }
+
+            // =====================================================
+            // FETCH MEMBER
+            // =====================================================
+
+            const member =
+                await interaction.guild.members.fetch(
+                    user.id
+                );
+
+            // =====================================================
+            // REMOVE OLD TIER ROLES
+            // =====================================================
+
+            const allGamemodeRoles =
+                Object.values(gamemodeTiers);
+
+            const rolesUserHas =
+                allGamemodeRoles.filter(roleId =>
+                    member.roles.cache.has(roleId)
+                );
+
+            if (rolesUserHas.length > 0) {
+
+                await member.roles.remove(
+                    rolesUserHas,
+                    'Updating KairoTiers tier'
+                );
+            }
+
+            // =====================================================
+            // ADD NEW TIER ROLE
+            // =====================================================
+
+            await member.roles.add(
+                newRoleId,
+                'KairoTiers test result'
             );
-          } else {
+
+            // =====================================================
+            // SAVE RESULT
+            // =====================================================
+
+            const {
+                error: insertError
+            } = await supabase
+                .from('results')
+                .insert({
+                    discord_id: user.id,
+                    ign: player.ign,
+                    gamemode: gamemode,
+                    previous_tier: previousTier,
+                    new_tier: tier,
+                    tester_id: interaction.user.id
+                });
+
+            if (insertError) {
+
+                console.error(
+                    '<:Cross:1558553359642918952> RESULT INSERT ERROR:',
+                    insertError
+                );
+
+                return interaction.editReply({
+                    content:
+                        '⚠️ Discord role was updated, but the result could not be saved.'
+                });
+            }
+
             console.log(
-              `[RP] Website sync successful for ${playerIgn} (${gamemode} ${tier}).`
+                `<:tick:1558554326887047228> Result saved: ${player.ign} | ${gamemode} | ${previousTier} → ${tier}`
             );
-          }
-        } catch (websiteError) {
-          // The Discord result has already been saved.
-          console.error('[RP] Website sync error:', websiteError);
+
+            // =====================================================
+            // 7 DAY COOLDOWN
+            // ONLY THIS GAMEMODE
+            // =====================================================
+
+            const cooldownUntil =
+                new Date(
+                    Date.now() +
+                    7 * 24 * 60 * 60 * 1000
+                );
+
+            const {
+                error: cooldownError
+            } = await supabase
+                .from('testing_cooldowns')
+                .upsert(
+                    {
+                        discord_id: user.id,
+                        gamemode: gamemode,
+                        cooldown_until:
+                            cooldownUntil.toISOString()
+                    },
+                    {
+                        onConflict:
+                            'discord_id,gamemode'
+                    }
+                );
+
+            if (cooldownError) {
+
+                console.error(
+                    '<:Cross:1558553359642918952> COOLDOWN SAVE ERROR:',
+                    cooldownError
+                );
+
+                return interaction.editReply({
+                    content:
+                        '⚠️ Result was saved, but the 7-day cooldown could not be saved.'
+                });
+            }
+
+            console.log(
+                `<:tick:1558554326887047228> ${user.tag} received a 7-day ${gamemode} cooldown.`
+            );
+
+            // =====================================================
+            // WEBSITE SYNC
+            // =====================================================
+
+            try {
+
+                const websiteResponse =
+                    await fetch(
+                        process.env.WEBSITE_API_URL,
+                        {
+                            method: 'POST',
+
+                            headers: {
+                                'Content-Type':
+                                    'application/json',
+
+                                'X-Bot-Secret':
+                                    process.env.WEBSITE_BOT_SECRET
+                            },
+
+                            body: JSON.stringify({
+                                discordId: user.id,
+                                ign: player.ign,
+                                tier: tier,
+                                gamemode:
+                                    gamemode.toLowerCase()
+                            })
+                        }
+                    );
+
+                const websiteText =
+                    await websiteResponse.text();
+
+                console.log(
+                    '🌐 Website API Status:',
+                    websiteResponse.status
+                );
+
+                console.log(
+                    '🌐 Website API Response:',
+                    websiteText
+                );
+
+                if (!websiteResponse.ok) {
+
+                    console.error(
+                        '<:Cross:1558553359642918952> Website sync failed!'
+                    );
+
+                } else {
+
+                    console.log(
+                        '<:tick:1558554326887047228> Website tier synced successfully!'
+                    );
+                }
+
+            } catch (error) {
+
+                console.error(
+                    '<:Cross:1558553359642918952> WEBSITE SYNC ERROR:',
+                    error
+                );
+            }
+
+            // =====================================================
+            // RESULT CHANNEL
+            // =====================================================
+
+            const resultChannel =
+                await interaction.guild.channels.fetch(
+                    config.channels.results
+                );
+
+            if (resultChannel) {
+
+                const gameEmoji =
+                    emojis.gamemodes?.[gamemode] || '';
+
+                const testerEmoji =
+                    emojis.tester ||
+                    emojis.ui?.tester ||
+                    '';
+
+                const resultEmbed = {
+
+                    title:
+                        `${player.ign}'s Tier Update 🏆`,
+
+                    color:
+                        0x8B0000,
+
+                    fields: [
+
+                        {
+                            name:
+                                'Tester',
+
+                            value:
+                                `${testerEmoji} <@${interaction.user.id}>`,
+
+                            inline:
+                                false
+                        },
+
+                        {
+                            name:
+                                'Minecraft Username',
+
+                            value:
+                                `\`${player.ign}\``,
+
+                            inline:
+                                false
+                        },
+
+                        {
+                            name:
+                                'Game Mode',
+
+                            value:
+                                `${gameEmoji} **${gamemode}**`,
+
+                            inline:
+                                false
+                        },
+
+                        {
+                            name:
+                                'Previous Rank',
+
+                            value:
+                                `\`${previousTier}\``,
+
+                            inline:
+                                false
+                        },
+
+                        {
+                            name:
+                                'Rank Earned',
+
+                            value:
+                                `\`${tier}\``,
+
+                            inline:
+                                false
+                        }
+                    ],
+
+                    footer: {
+                        text:
+                            'KairoTiers • Minecraft Tier Testing'
+                    },
+
+                    timestamp:
+                        new Date()
+                };
+
+                await resultChannel.send({
+                    content:
+                        `${user}`,
+
+                    embeds:
+                        [resultEmbed]
+                });
+            }
+
+            // =====================================================
+            // SUCCESS
+            // =====================================================
+
+            const unixCooldown =
+                Math.floor(
+                    cooldownUntil.getTime() /
+                    1000
+                );
+
+            await interaction.editReply({
+                content:
+                    `<:tick:1558554326887047228> Result submitted for **${player.ign}** in **${gamemode}**.\n\n` +
+                    `Previous Tier: **${previousTier}**\n` +
+                    `New Tier: **${tier}**\n\n` +
+                    `⏳ **${gamemode} cooldown:** <t:${unixCooldown}:R>`
+            });
+
+        } catch (error) {
+
+            console.error(
+                '<:Cross:1558553359642918952> RP COMMAND ERROR:',
+                error
+            );
+
+            if (
+                interaction.replied ||
+                interaction.deferred
+            ) {
+
+                await interaction.editReply({
+                    content:
+                        '<:Cross:1558553359642918952> An error occurred while submitting the result. Check the console.'
+                }).catch(() => {});
+
+            } else {
+
+                await interaction.reply({
+                    content:
+                        '<:Cross:1558553359642918952> An error occurred while submitting the result.',
+                    flags:
+                        MessageFlags.Ephemeral
+                }).catch(() => {});
+            }
         }
-      } else {
-        console.error(
-          '[RP] Website sync skipped: WEBSITE_API_URL or WEBSITE_BOT_SECRET is missing.'
-        );
-      }
-
-      // Post the result in the configured results channel.
-      const resultsChannelId = config.channels?.results;
-
-      if (resultsChannelId) {
-        const resultsChannel = await interaction.client.channels
-          .fetch(resultsChannelId)
-          .catch(error => {
-            console.error('[RP] Could not fetch results channel:', error);
-            return null;
-          });
-
-        if (resultsChannel?.isTextBased()) {
-          const gamemodeEmoji =
-            emojis.gamemodes?.[gamemode] ?? '';
-
-          const resultEmbed = new EmbedBuilder()
-            .setColor('#8B0000')
-            .setTitle('Testing Result')
-            .setDescription(
-              [
-                `**Player:** ${playerIgn}`,
-                `**Discord:** ${player}`,
-                `**Gamemode:** ${gamemodeEmoji} ${gamemode}`,
-                `**Previous Tier:** ${previousTier}`,
-                `**New Tier:** ${tier}`,
-                `**Tester:** ${interaction.user}`,
-              ].join('\n')
-            )
-            .setTimestamp();
-
-          await resultsChannel.send({
-            embeds: [resultEmbed],
-          }).catch(error => {
-            console.error('[RP] Failed to post result embed:', error);
-          });
-        }
-      }
-
-      // Confirm success to the tester.
-      const unixCooldown = Math.floor(
-        cooldownUntil.getTime() / 1000
-      );
-
-      return await interaction.editReply({
-        content:
-          `${emojis.tick} Result submitted for **${playerIgn}** in **${gamemode}**.\n\n` +
-          `Previous Tier: **${previousTier}**\n` +
-          `New Tier: **${tier}**\n\n` +
-          `⏳ **${gamemode}** cooldown: <t:${unixCooldown}:R>`,
-      });
-    } catch (error) {
-      console.error('[RP] COMMAND ERROR:', error);
-
-      if (interaction.deferred || interaction.replied) {
-        return await interaction.editReply({
-          content: `${emojis.cross} An error occurred while submitting the result. Check the console.`,
-        }).catch(() => {});
-      }
     }
-  },
 };
