@@ -79,7 +79,7 @@ module.exports = {
 
             const closedEmbed = new EmbedBuilder()
                 .setTitle(
-                    `${closeEmoji || '🔒'} ${gamemode} Queue Closed`
+                    `${closeEmoji || '<:queue_close:1534872880045887710>'} ${gamemode} Queue Closed`
                 )
                 .setColor(0xED4245)
                 .setDescription(
@@ -87,12 +87,12 @@ module.exports = {
                 )
                 .addFields(
                     {
-                        name: '📋 Reason',
+                        name: '<:Updates:1552280778916761671> Reason',
                         value: 'Queue closed by command',
                         inline: false
                     },
                     {
-                        name: '🕐 Session Ended',
+                        name: '<:Poll:1552279014767591516> Session Ended',
                         value: queue.closed_at
                             ? `<t:${Math.floor(new Date(queue.closed_at).getTime() / 1000)}:F>`
                             : `<t:${Math.floor(Date.now() / 1000)}:F>`,
@@ -208,7 +208,7 @@ module.exports = {
             .setColor(0x5865F2)
             .setDescription(
                 `${testerEmoji} **Tester(s) Available!**\n\n` +
-                `🕐 The queue updates automatically.\n` +
+                `<:Poll:1552279014767591516> The queue updates automatically.\n` +
                 `Use **Join Queue** / **Leave Queue** to manage your position.`
             )
             .addFields(

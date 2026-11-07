@@ -2,13 +2,15 @@ const {
     Client,
     GatewayIntentBits,
     Collection,
-    Partials
+    Partials,
+    Events
 } = require('discord.js');
 
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
+const giveawayManager = require('./src/utils/giveawayManager');
 
 dotenv.config();
 
@@ -100,6 +102,21 @@ for (const file of eventFiles) {
 
     console.log(`<:tick:1558554326887047228> Loaded Event: ${event.name}`);
 }
+
+// ==========================================
+// Resume Active Giveaways
+// ==========================================
+
+client.once(Events.ClientReady, async () => {
+    try {
+        await giveawayManager.resumeActiveGiveaways(client);
+    } catch (error) {
+        console.error(
+            '<:Cross:1558553359642918952> Giveaway resume failed:',
+            error
+        );
+    }
+});
 
 // ==========================================
 // Login

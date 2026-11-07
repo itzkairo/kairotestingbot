@@ -19,7 +19,7 @@ module.exports = {
     async execute(interaction) {
 
         const embed = new EmbedBuilder()
-            .setTitle('📋 KairoTiers — Testing Waitlist')
+            .setTitle('<:Updates:1552280778916761671> KairoTiers — Testing Waitlist')
             .setColor(0x8B0000)
             .setDescription(
                 '**Welcome to the KairoTiers Testing System!**\n\n' +
@@ -36,7 +36,7 @@ module.exports = {
                 '**Regions**\n' +
                 '`NA` • `EU` • `AS/AU` • `SA`\n\n' +
 
-                '🔴 **Important:** You must have a registered profile before joining a waitlist.'
+                '<:Poll:1552279014767591516> **Important:** You must have a registered profile before joining a waitlist.'
             )
             .setFooter({
                 text: 'KairoTiers • Minecraft Tier Testing'

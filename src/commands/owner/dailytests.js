@@ -87,7 +87,7 @@ module.exports = {
             )
             .addFields(
                 {
-                    name: "🧪 Total Tests",
+                    name: "<:verified_tester:1534872920440963102> Total Tests",
                     value: `**${results.length}**`,
                     inline: true
                 },
@@ -97,7 +97,7 @@ module.exports = {
                     inline: true
                 },
                 {
-                    name: "🏆 Tester Activity",
+                    name: "<:1471678791821688842:1546946782565769267> Tester Activity",
                     value: testerText || "No tester data.",
                     inline: false
                 },

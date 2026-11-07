@@ -35,7 +35,7 @@ module.exports = {
 
                 const embed = new EmbedBuilder()
                     .setColor(config.colors.primary)
-                    .setTitle("🏆 Tester Leaderboard")
+                    .setTitle("<:1471678791821688842:1546946782565769267> Tester Leaderboard")
                     .setDescription("No tests have been completed yet.")
                     .setFooter({
                         text: "KairoTiers • Tester Leaderboard"
@@ -83,13 +83,13 @@ module.exports = {
 
             const embed = new EmbedBuilder()
                 .setColor(config.colors.primary)
-                .setTitle("🏆 Tester Leaderboard")
+                .setTitle("<:1471678791821688842:1546946782565769267> Tester Leaderboard")
                 .setDescription(
                     `Top testers ranked by their total completed tests.\n\n${leaderboardText}`
                 )
                 .addFields(
                     {
-                        name: "🧪 Total Tests",
+                        name: "<:verified_tester:1534872920440963102> Total Tests",
                         value: `**${results.length}**`,
                         inline: true
                     },

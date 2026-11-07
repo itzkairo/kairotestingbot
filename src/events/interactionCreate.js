@@ -16,6 +16,7 @@ const config = require('../config/config');
 const supabase = require('../database/supabase');
 const queueRenderer = require('../queue/queueRenderer');
 const perms = require('../utils/permissions');
+const giveawayManager = require('../utils/giveawayManager');
 
 module.exports = {
     name: 'interactionCreate',
@@ -82,6 +83,14 @@ module.exports = {
 
                 const customId =
                     interaction.customId;
+
+                // =================================================
+                // GIVEAWAY JOIN BUTTON
+                // =================================================
+
+                if (customId.startsWith('giveaway_join_')) {
+                    return await giveawayManager.handleJoinButton(interaction);
+                }
 
                 // =================================================
                 // TESTER LEADERBOARD RESET
@@ -846,7 +855,7 @@ module.exports = {
                     await interaction.editReply({
                         content: isSkip
                             ? '⏭️ Transcript saved successfully. Closing ticket without a cooldown.'
-                            : '<:tick:1558554326887047228> Transcript saved successfully.\n🔒 15-day High Test cooldown applied.\n🗑️ Closing ticket...'
+                            : '<:tick:1558554326887047228> Transcript saved successfully.\n<:queue_close:1534872880045887710> 15-day High Test cooldown applied.\n🗑️ Closing ticket...'
                     });
 
                     // =============================================
@@ -2167,7 +2176,7 @@ module.exports = {
 
                                 {
                                     name:
-                                        '🏆 Current Tier',
+                                        '<:1471678791821688842:1546946782565769267> Current Tier',
                                     value:
                                         `\`${currentTier}\``,
                                     inline:

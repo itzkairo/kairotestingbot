@@ -370,7 +370,7 @@ module.exports = {
                 const resultEmbed = {
 
                     title:
-                        `${player.ign}'s Tier Update 🏆`,
+                        `${player.ign}'s Tier Update <:1471678791821688842:1546946782565769267>`,
 
                     color:
                         0x8B0000,

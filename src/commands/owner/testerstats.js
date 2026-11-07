@@ -167,7 +167,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor(config.colors.primary)
-            .setTitle("🧪 Tester Statistics")
+            .setTitle("<:verified_tester:1534872920440963102> Tester Statistics")
             .setThumbnail(
                 user.displayAvatarURL({
                     dynamic: true,
@@ -180,7 +180,7 @@ module.exports = {
             )
             .addFields(
                 {
-                    name: "🧪 Total Tests",
+                    name: "<:verified_tester:1534872920440963102> Total Tests",
                     value: `**${totalTests}**`,
                     inline: true
                 },
@@ -190,7 +190,7 @@ module.exports = {
                     inline: true
                 },
                 {
-                    name: "🏆 Different Tiers",
+                    name: "<:1471678791821688842:1546946782565769267> Different Tiers",
                     value: `**${Object.keys(tierStats).length}**`,
                     inline: true
                 },
@@ -200,12 +200,12 @@ module.exports = {
                     inline: false
                 },
                 {
-                    name: "🏆 Tiers Given",
+                    name: "<:1471678791821688842:1546946782565769267> Tiers Given",
                     value: tierText || "No data.",
                     inline: false
                 },
                 {
-                    name: "📋 Detailed Breakdown",
+                    name: "<:Updates:1552280778916761671> Detailed Breakdown",
                     value:
                         detailedText.length > 1024
                             ? detailedText.substring(0, 1020) + "..."
