@@ -5,9 +5,7 @@ module.exports = {
         Sword: '<:sword:1534871761521217650>',
         Mace: '<:mace:1534871738909724784>',
         DiaPot: '<:diapot:1534871592730099743>',
-        Crystal: '<:crystall:1534871637210431638>',
-        Axe: '<:axe:1534871781406543934>',
-        NethPot: '<:nethpot:1534871712179687454>'
+        Axe: '<:axe:1534871781406543934>'
     },
 
     tester: '<:verified_tester:1534872920440963102>',

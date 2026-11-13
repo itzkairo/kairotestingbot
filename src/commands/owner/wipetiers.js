@@ -24,7 +24,7 @@ module.exports = {
         // OWNER ONLY
         // ==========================================
 
-        if (interaction.user.id !== process.env.OWNER_ID) {
+        if (interaction.user.id !== config.roles.ownerId) {
             return interaction.reply({
                 content: "<:Cross:1558553359642918952> Only the bot owner can use this command.",
                 flags: MessageFlags.Ephemeral

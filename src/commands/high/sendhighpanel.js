@@ -86,10 +86,8 @@ module.exports = {
 
         const gamemodes = [
             'Axe',
-            'Crystal',
             'Sword',
             'Mace',
-            'NethPot',
             'SMP',
             'UHC',
             'DiaPot'
@@ -113,9 +111,7 @@ module.exports = {
                             `high_test_${gamemode}`
                         )
                         .setLabel(
-                            gamemode === 'NethPot'
-                                ? 'Nethpot'
-                                : gamemode
+                            gamemode
                         )
                         .setStyle(
                             ButtonStyle.Primary

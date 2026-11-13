@@ -993,13 +993,7 @@ module.exports = {
                             'DiaPot',
 
                         waitlist_mace:
-                            'Mace',
-
-                        waitlist_crystal:
-                            'Crystal',
-
-                        waitlist_nethpot:
-                            'NethPot'
+                            'Mace'
                     };
 
                     const gamemode =

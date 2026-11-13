@@ -6,12 +6,10 @@ const config = require('../config/config');
 const GAMEMODES = [
     'Sword',
     'Mace',
-    'NethPot',
     'Axe',
     'SMP',
     'UHC',
-    'DiaPot',
-    'Crystal'
+    'DiaPot'
 ];
 
 module.exports = {
